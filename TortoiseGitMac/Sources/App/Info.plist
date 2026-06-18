@@ -26,5 +26,16 @@
 	<string>NSApplication</string>
 	<key>LSUIElement</key>
 	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.tortoisegitmac.url</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tortoisegitmac</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

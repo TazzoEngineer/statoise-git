@@ -1,5 +1,6 @@
 import Cocoa
 import FinderSync
+import UserNotifications
 
 class FinderSyncExtension: FIFinderSync {
     
@@ -375,10 +376,15 @@ class FinderSyncExtension: FIFinderSync {
     // MARK: - Helpers
     
     private func showNotification(title: String, message: String) {
-        let notification = NSUserNotification()
-        notification.title = title
-        notification.informativeText = message
-        NSUserNotificationCenter.default.deliver(notification)
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert]) { granted, _ in
+            guard granted else { return }
+            let content = UNMutableNotificationContent()
+            content.title = title
+            content.body = message
+            let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+            center.add(request)
+        }
     }
     
     private func showError(_ error: Error) {
