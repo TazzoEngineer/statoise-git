@@ -35,15 +35,3 @@ extension AppDelegate {
         return mainMenu
     }
 }
-
-/// Custom NSApplication subclass to set up main menu without storyboard
-class TortoiseGitApplication: NSApplication {
-    override init() {
-        super.init()
-        mainMenu = AppDelegate.buildMainMenu()
-    }
-    
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-    }
-}

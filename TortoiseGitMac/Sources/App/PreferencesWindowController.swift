@@ -5,7 +5,7 @@ class PreferencesWindowController: NSWindowController {
     private var repositoryListView: NSTableView!
     private var repositories: [MonitoredRepository] = []
     
-    convenience init() {
+    init() {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 600, height: 400),
             styleMask: [.titled, .closable, .resizable, .miniaturizable],
@@ -16,9 +16,13 @@ class PreferencesWindowController: NSWindowController {
         window.center()
         window.isReleasedWhenClosed = false
         
-        self.init(window: window)
+        super.init(window: window)
         setupUI()
         loadRepositories()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
     }
     
     private func setupUI() {

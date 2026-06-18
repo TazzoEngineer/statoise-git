@@ -1,12 +1,12 @@
 import Cocoa
 
-@main
 class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var preferencesWindowController: PreferencesWindowController?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        setupMenuBar()
+        NSApp.mainMenu = AppDelegate.buildMainMenu()
+        showPreferences(nil)
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -21,10 +21,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     // MARK: - Menu Actions
-    
-    private func setupMenuBar() {
-        // Main menu is set up in MainMenu code below
-    }
     
     @IBAction func showPreferences(_ sender: Any?) {
         if preferencesWindowController == nil {

@@ -15,6 +15,7 @@
 		701D55AA89E5D502E344B382 /* RepositoryPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C1ED3D5BF76CA4D48330BFD /* RepositoryPreferences.swift */; };
 		7E063CC74730ADD387C0C04C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F77632B69F8A3F1BF84AE362 /* AppDelegate.swift */; };
 		AC26253AACCB200F63BDB011 /* RepositoryPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C1ED3D5BF76CA4D48330BFD /* RepositoryPreferences.swift */; };
+		BF8CDE24F08588ED20F7AA8C /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB808CE2E7878A0463B857AC /* main.swift */; };
 		EC254392F67D01A405A91F22 /* PreferencesWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC72ABE941CEC8752B6263B2 /* PreferencesWindowController.swift */; };
 /* End PBXBuildFile section */
 
@@ -49,6 +50,7 @@
 		6C1ED3D5BF76CA4D48330BFD /* RepositoryPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryPreferences.swift; sourceTree = "<group>"; };
 		A022E2A13035B9CBA4420A0F /* GitCommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitCommandRunner.swift; sourceTree = "<group>"; };
 		B534763F96EF4486A487D33F /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
+		BB808CE2E7878A0463B857AC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		D43F991BBEFB7FDE27073749 /* TortoiseGitFinderExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TortoiseGitFinderExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D690F6364453B6E9EBED9FFC /* FinderSyncExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderSyncExtension.swift; sourceTree = "<group>"; };
 		E18C5BD6740BA74A515A135A /* TortoiseGitMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TortoiseGitMac.entitlements; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 			children = (
 				F77632B69F8A3F1BF84AE362 /* AppDelegate.swift */,
 				1D41B54C9A9BDF697F039484 /* Info.plist */,
+				BB808CE2E7878A0463B857AC /* main.swift */,
 				B534763F96EF4486A487D33F /* MainMenu.swift */,
 				FC72ABE941CEC8752B6263B2 /* PreferencesWindowController.swift */,
 				E18C5BD6740BA74A515A135A /* TortoiseGitMac.entitlements */,
@@ -199,6 +202,7 @@
 				4AC078D19731B585F9F9E08B /* MainMenu.swift in Sources */,
 				EC254392F67D01A405A91F22 /* PreferencesWindowController.swift in Sources */,
 				701D55AA89E5D502E344B382 /* RepositoryPreferences.swift in Sources */,
+				BF8CDE24F08588ED20F7AA8C /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
