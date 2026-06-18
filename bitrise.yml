@@ -1,0 +1,250 @@
+---
+format_version: "13"
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+
+app:
+  envs:
+    - PROJECT_PATH: TortoiseGitMac/TortoiseGitMac.xcodeproj
+    - SCHEME: TortoiseGitMac
+    - EXPORT_METHOD: developer-id
+    - TEAM_ID: $APPLE_TEAM_ID
+    - BUNDLE_ID: com.tortoisegitmac.app
+
+meta:
+  bitrise.io:
+    stack: osx-xcode-16.0.x
+    machine_type_id: g2-m1.8core
+
+trigger_map:
+  - push_branch: main
+    pipeline: pipeline-release
+  - push_branch: master
+    pipeline: pipeline-release
+  - push_branch: develop
+    pipeline: pipeline-debug
+  - pull_request_source_branch: "*"
+    pipeline: pipeline-debug
+
+pipelines:
+  pipeline-debug:
+    stages:
+      - stage-build-debug: {}
+
+  pipeline-release:
+    stages:
+      - stage-build-release: {}
+      - stage-notarize: {}
+      - stage-distribute: {}
+
+stages:
+  stage-build-debug:
+    workflows:
+      - build-debug: {}
+
+  stage-build-release:
+    workflows:
+      - build-release: {}
+
+  stage-notarize:
+    workflows:
+      - notarize: {}
+
+  stage-distribute:
+    workflows:
+      - distribute: {}
+
+workflows:
+  # ----------------------------
+  # Debug build (PRs, develop)
+  # ----------------------------
+  build-debug:
+    steps:
+      - git-clone@8: {}
+
+      - script@1:
+          title: Install xcodegen
+          inputs:
+            - content: brew install xcodegen
+
+      - script@1:
+          title: Generate Xcode project
+          inputs:
+            - content: |
+                cd TortoiseGitMac
+                xcodegen generate
+
+      - xcode-build-for-test@3:
+          inputs:
+            - project_path: $PROJECT_PATH
+            - scheme: $SCHEME
+            - configuration: Debug
+            - destination: platform=macOS
+
+      - deploy-to-bitrise-io@2:
+          inputs:
+            - is_compress: "true"
+
+  # ----------------------------
+  # Release build (main/master)
+  # ----------------------------
+  build-release:
+    envs:
+      - CONFIGURATION: Release
+    steps:
+      - git-clone@8: {}
+
+      - script@1:
+          title: Install xcodegen
+          inputs:
+            - content: brew install xcodegen
+
+      - script@1:
+          title: Generate Xcode project
+          inputs:
+            - content: |
+                cd TortoiseGitMac
+                xcodegen generate
+
+      - certificate-and-profile-installer@1: {}
+
+      - script@1:
+          title: Build and Archive
+          inputs:
+            - content: |
+                set -euo pipefail
+
+                cd TortoiseGitMac
+
+                xcodebuild \
+                  -project TortoiseGitMac.xcodeproj \
+                  -scheme "$SCHEME" \
+                  -configuration Release \
+                  -archivePath "$BITRISE_DEPLOY_DIR/TortoiseGitMac.xcarchive" \
+                  archive \
+                  CODE_SIGN_IDENTITY="Developer ID Application" \
+                  DEVELOPMENT_TEAM="$TEAM_ID"
+
+      - script@1:
+          title: Export app from archive
+          inputs:
+            - content: |
+                set -euo pipefail
+
+                ARCHIVE_PATH="$BITRISE_DEPLOY_DIR/TortoiseGitMac.xcarchive"
+                APP_PATH="$BITRISE_DEPLOY_DIR/TortoiseGitMac.app"
+
+                # Copy app from archive
+                cp -R "$ARCHIVE_PATH/Products/Applications/TortoiseGitMac.app" "$APP_PATH"
+
+                echo "Exported app to: $APP_PATH"
+
+      - script@1:
+          title: Create DMG
+          inputs:
+            - content: |
+                set -euo pipefail
+
+                APP_PATH="$BITRISE_DEPLOY_DIR/TortoiseGitMac.app"
+                DMG_PATH="$BITRISE_DEPLOY_DIR/TortoiseGitMac.dmg"
+
+                # Get version from Info.plist
+                VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
+                  "$APP_PATH/Contents/Info.plist")
+
+                DMG_NAME="TortoiseGitMac-${VERSION}.dmg"
+                DMG_PATH="$BITRISE_DEPLOY_DIR/$DMG_NAME"
+
+                # Create DMG
+                hdiutil create -volname "TortoiseGitMac" \
+                  -srcfolder "$APP_PATH" \
+                  -ov -format UDZO \
+                  "$DMG_PATH"
+
+                echo "Created DMG: $DMG_PATH"
+                envman add --key DMG_PATH --value "$DMG_PATH"
+                envman add --key APP_VERSION --value "$VERSION"
+
+      - deploy-to-bitrise-io@2: {}
+
+  # ----------------------------
+  # Notarize with Apple
+  # ----------------------------
+  notarize:
+    steps:
+      - git-clone@8: {}
+
+      - artifact-pull@1:
+          inputs:
+            - artifact_sources: stage-build-release.*
+
+      - script@1:
+          title: Notarize DMG
+          inputs:
+            - content: |
+                set -euo pipefail
+
+                DMG_PATH=$(find "$BITRISE_DEPLOY_DIR" -name "*.dmg" | head -1)
+
+                if [ -z "$DMG_PATH" ]; then
+                  echo "Error: No DMG found"
+                  exit 1
+                fi
+
+                echo "Submitting for notarization: $DMG_PATH"
+
+                xcrun notarytool submit "$DMG_PATH" \
+                  --apple-id "$APPLE_ID" \
+                  --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+                  --team-id "$TEAM_ID" \
+                  --wait
+
+                echo "Stapling notarization ticket..."
+                xcrun stapler staple "$DMG_PATH"
+
+                echo "Notarization complete"
+
+      - deploy-to-bitrise-io@2: {}
+
+  # ----------------------------
+  # Distribute to team
+  # ----------------------------
+  distribute:
+    steps:
+      - artifact-pull@1:
+          inputs:
+            - artifact_sources: stage-notarize.*
+
+      - script@1:
+          title: Upload to distribution server
+          inputs:
+            - content: |
+                set -euo pipefail
+
+                DMG_PATH=$(find "$BITRISE_DEPLOY_DIR" -name "*.dmg" | head -1)
+
+                if [ -z "$DMG_PATH" ]; then
+                  echo "Error: No DMG found"
+                  exit 1
+                fi
+
+                echo "DMG ready for distribution: $DMG_PATH"
+                echo "File size: $(du -h "$DMG_PATH" | cut -f1)"
+
+                # -------------------------------------------------------
+                # Uncomment ONE of the following distribution methods:
+                # -------------------------------------------------------
+
+                # Option 1: Upload to S3
+                # aws s3 cp "$DMG_PATH" "s3://$S3_BUCKET/releases/"
+
+                # Option 2: Upload to internal server via curl
+                # curl -F "file=@$DMG_PATH" "$DISTRIBUTION_SERVER_URL/upload"
+
+                # Option 3: Create GitHub Release (requires gh CLI)
+                # gh release create "v${APP_VERSION}" "$DMG_PATH" \
+                #   --title "TortoiseGitMac v${APP_VERSION}" \
+                #   --notes "Release v${APP_VERSION}"
+
+                echo "Distribution step complete. Configure upload target in bitrise.yml."
+
+      - deploy-to-bitrise-io@2: {}

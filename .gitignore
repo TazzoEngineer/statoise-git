@@ -16,3 +16,6 @@ build/
 
 # Reference source (not part of this project)
 tortoisegit-ref/
+
+# Local build output
+build/
