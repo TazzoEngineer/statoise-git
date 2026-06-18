@@ -1,0 +1,51 @@
+name: TortoiseGitMac
+options:
+  bundleIdPrefix: com.tortoisegitmac
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+
+targets:
+  TortoiseGitMac:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/App
+      - Sources/GitOperations
+      - Sources/Shared
+    resources:
+      - Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tortoisegitmac.app
+        INFOPLIST_FILE: Sources/App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/App/TortoiseGitMac.entitlements
+        PRODUCT_NAME: TortoiseGitMac
+        COMBINE_HIDPI_IMAGES: YES
+    dependencies:
+      - target: TortoiseGitFinderExtension
+
+  TortoiseGitFinderExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - FinderExtension
+      - Sources/Shared
+      - Sources/GitOperations
+    resources:
+      - path: Resources/OverlayIcons
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tortoisegitmac.app.FinderExtension
+        INFOPLIST_FILE: FinderExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: FinderExtension/TortoiseGitFinderExtension.entitlements
+        PRODUCT_NAME: TortoiseGitFinderExtension
+        SKIP_INSTALL: YES
+    postCompileScripts: []
