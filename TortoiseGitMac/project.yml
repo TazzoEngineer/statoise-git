@@ -39,8 +39,11 @@ targets:
       - Sources/Shared
       - Sources/GitOperations
     resources:
-      - path: Resources/OverlayIcons
+      - path: FinderExtension/OverlayIcons
         buildPhase: resources
+    dependencies:
+      - sdk: FinderSync.framework
+      - sdk: UserNotifications.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tortoisegitmac.app.FinderExtension

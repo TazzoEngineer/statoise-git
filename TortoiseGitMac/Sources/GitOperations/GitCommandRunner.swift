@@ -1,4 +1,7 @@
 import Foundation
+import os.log
+
+private let gitLogger = Logger(subsystem: "com.tortoisegitmac.app", category: "GitCommandRunner")
 
 /// Represents a Git file status
 enum GitFileStatus: String {
@@ -61,7 +64,12 @@ actor GitCommandRunner {
         process.standardOutput = outputPipe
         process.standardError = errorPipe
         
-        try process.run()
+        do {
+            try process.run()
+        } catch {
+            gitLogger.error("Process.run() failed for git \(arguments.joined(separator: " "), privacy: .public): \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
         process.waitUntilExit()
         
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
@@ -71,6 +79,7 @@ actor GitCommandRunner {
         let errorOutput = String(data: errorData, encoding: .utf8) ?? ""
         
         if process.terminationStatus != 0 {
+            gitLogger.error("git \(arguments.joined(separator: " "), privacy: .public) failed (exit \(process.terminationStatus)): \(errorOutput, privacy: .public)")
             throw GitError.commandFailed(
                 command: "git \(arguments.joined(separator: " "))",
                 exitCode: Int(process.terminationStatus),
@@ -85,7 +94,7 @@ actor GitCommandRunner {
     
     func status(at path: String) async throws -> [GitStatusEntry] {
         let output = try await runGit(
-            arguments: ["status", "--porcelain=v1", "-z"],
+            arguments: ["status", "--porcelain=v1", "-z", "-uall"],
             workingDirectory: path
         )
         return parseStatus(output)
@@ -222,6 +231,11 @@ actor GitCommandRunner {
     // MARK: - Repository Detection
     
     func isGitRepository(at path: String) async -> Bool {
+        // First try filesystem check (works in sandbox)
+        if isGitRepositoryByFilesystem(at: path) {
+            return true
+        }
+        // Then try git command
         do {
             _ = try await runGit(
                 arguments: ["rev-parse", "--is-inside-work-tree"],
@@ -231,6 +245,42 @@ actor GitCommandRunner {
         } catch {
             return false
         }
+    }
+    
+    /// Check if a path is inside a git repository by looking for .git directory
+    nonisolated func isGitRepositoryByFilesystem(at path: String) -> Bool {
+        let fm = FileManager.default
+        var current = path
+        var isDir: ObjCBool = false
+        if fm.fileExists(atPath: current, isDirectory: &isDir), !isDir.boolValue {
+            current = (current as NSString).deletingLastPathComponent
+        }
+        while current != "/" && !current.isEmpty {
+            let gitDir = (current as NSString).appendingPathComponent(".git")
+            if fm.fileExists(atPath: gitDir) {
+                return true
+            }
+            current = (current as NSString).deletingLastPathComponent
+        }
+        return false
+    }
+    
+    /// Find repository root by walking up the directory tree
+    nonisolated func repositoryRootByFilesystem(at path: String) -> String? {
+        let fm = FileManager.default
+        var current = path
+        var isDir: ObjCBool = false
+        if fm.fileExists(atPath: current, isDirectory: &isDir), !isDir.boolValue {
+            current = (current as NSString).deletingLastPathComponent
+        }
+        while current != "/" && !current.isEmpty {
+            let gitDir = (current as NSString).appendingPathComponent(".git")
+            if fm.fileExists(atPath: gitDir) {
+                return current
+            }
+            current = (current as NSString).deletingLastPathComponent
+        }
+        return nil
     }
     
     func repositoryRoot(at path: String) async throws -> String {

@@ -11,6 +11,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.mainMenu = AppDelegate.buildMainMenu()
         showPreferences(nil)
         
+        // Start background git status service for Finder Extension
+        GitStatusService.shared.start()
+        
         // Register URL scheme handler
         NSAppleEventManager.shared().setEventHandler(
             self,
@@ -105,8 +108,47 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             showDiffWindow(repositoryPath: path, file: file)
         case "stash-list":
             showLogWindow(repositoryPath: path) // Reuse log viewer for now
+        case "pull":
+            runGitAction(title: "Git Pull", path: path) { try await GitCommandRunner.shared.pull(at: path) }
+        case "push":
+            runGitAction(title: "Git Push", path: path) { try await GitCommandRunner.shared.push(at: path) }
+        case "fetch":
+            runGitAction(title: "Git Fetch", path: path) { try await GitCommandRunner.shared.fetch(at: path) }
+        case "add":
+            let files = components.queryItems?.first(where: { $0.name == "files" })?.value?
+                .components(separatedBy: ",") ?? []
+            if !files.isEmpty {
+                runGitAction(title: "Git Add", path: path) { try await GitCommandRunner.shared.add(at: path, files: files) }
+            }
+        case "stash-save":
+            runGitAction(title: "Git Stash Save", path: path) { try await GitCommandRunner.shared.stashSave(at: path, message: nil) }
+        case "stash-pop":
+            runGitAction(title: "Git Stash Pop", path: path) { try await GitCommandRunner.shared.stashPop(at: path) }
         default:
             break
+        }
+    }
+    
+    private func runGitAction(title: String, path: String, action: @escaping () async throws -> Void) {
+        Task {
+            do {
+                try await action()
+                // Refresh status cache after git operation
+                await GitStatusService.shared.refreshRepository(at: path)
+                
+                // Show success notification
+                let alert = NSAlert()
+                alert.messageText = title
+                alert.informativeText = "Completed successfully."
+                alert.alertStyle = .informational
+                alert.runModal()
+            } catch {
+                let alert = NSAlert()
+                alert.messageText = "\(title) Failed"
+                alert.informativeText = error.localizedDescription
+                alert.alertStyle = .critical
+                alert.runModal()
+            }
         }
     }
     

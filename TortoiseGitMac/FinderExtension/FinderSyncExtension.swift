@@ -1,14 +1,41 @@
 import Cocoa
 import FinderSync
 import UserNotifications
+import os.log
+
+private let logger = Logger(subsystem: "com.tortoisegitmac.app.FinderExtension", category: "FinderSync")
 
 class FinderSyncExtension: FIFinderSync {
     
     private var statusCache: [String: GitFileStatus] = [:]
     private var monitoredDirectories: Set<URL> = []
+    private var refreshTimer: Timer?
+    
+    // MARK: - Toolbar Item
+    
+    override var toolbarItemName: String {
+        return "TortoiseGit"
+    }
+    
+    override var toolbarItemToolTip: String {
+        return "TortoiseGitMac Git Operations"
+    }
+    
+    override var toolbarItemImage: NSImage {
+        return NSImage(systemSymbolName: "tortoise.fill", accessibilityDescription: "TortoiseGit")
+            ?? NSImage(named: NSImage.networkName)!
+    }
     
     override init() {
         super.init()
+        
+        logger.notice("FinderSyncExtension init() started")
+        
+        // Set monitored directories immediately (before badge registration)
+        // This ensures Finder knows our extension is active
+        let homeURL = URL(fileURLWithPath: NSHomeDirectory())
+        FIFinderSyncController.default().directoryURLs = [homeURL]
+        logger.notice("Set initial directoryURLs to home: \(homeURL.path)")
         
         // Register badge icons for Finder overlays
         registerBadgeIcons()
@@ -23,6 +50,17 @@ class FinderSyncExtension: FIFinderSync {
             name: UserDefaults.didChangeNotification,
             object: nil
         )
+        
+        logger.notice("FinderSyncExtension init() completed")
+        
+        // Periodically refresh from App Group cache
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            self?.reloadAllStatusFromCache()
+        }
+    }
+    
+    deinit {
+        refreshTimer?.invalidate()
     }
     
     // MARK: - Badge Registration
@@ -46,21 +84,29 @@ class FinderSyncExtension: FIFinderSync {
             if let image = loadOverlayImage(named: badge.iconName) {
                 controller.setBadgeImage(image, label: badge.label, forBadgeIdentifier: badge.identifier)
             } else {
-                NSLog("TortoiseGitMac: Failed to load badge icon: \(badge.iconName)")
+                logger.error("Failed to load badge icon: \(badge.iconName, privacy: .public)")
             }
         }
     }
     
     private func loadOverlayImage(named name: String) -> NSImage? {
-        // Load from the extension bundle's Resources/OverlayIcons
-        guard let bundlePath = Bundle(for: type(of: self)).path(forResource: name, ofType: "png", inDirectory: "OverlayIcons") else {
-            // Fallback: try without subdirectory
-            guard let path = Bundle(for: type(of: self)).path(forResource: name, ofType: "png") else {
-                return nil
-            }
+        let bundle = Bundle(for: type(of: self))
+        
+        // Xcode combines @1x/@2x PNGs into TIFF with COMBINE_HIDPI_IMAGES
+        if let path = bundle.path(forResource: name, ofType: "tiff") {
             return NSImage(contentsOfFile: path)
         }
-        return NSImage(contentsOfFile: bundlePath)
+        if let path = bundle.path(forResource: name, ofType: "tiff", inDirectory: "OverlayIcons") {
+            return NSImage(contentsOfFile: path)
+        }
+        // Fallback to PNG
+        if let path = bundle.path(forResource: name, ofType: "png") {
+            return NSImage(contentsOfFile: path)
+        }
+        if let path = bundle.path(forResource: name, ofType: "png", inDirectory: "OverlayIcons") {
+            return NSImage(contentsOfFile: path)
+        }
+        return nil
     }
     
     // MARK: - Monitored Directories
@@ -69,7 +115,14 @@ class FinderSyncExtension: FIFinderSync {
         let repos = RepositoryPreferences.shared.enabledRepositoryPaths
         monitoredDirectories = Set(repos.compactMap { URL(fileURLWithPath: $0) })
         
+        if monitoredDirectories.isEmpty {
+            // Default to home directory so the extension stays active
+            monitoredDirectories = [URL(fileURLWithPath: NSHomeDirectory())]
+            logger.notice("No repositories configured, monitoring home directory")
+        }
+        
         FIFinderSyncController.default().directoryURLs = monitoredDirectories
+        logger.notice("Monitoring \(self.monitoredDirectories.count) directories: \(self.monitoredDirectories.map(\.path).joined(separator: ", "))")
     }
     
     @objc private func preferencesChanged() {
@@ -79,10 +132,9 @@ class FinderSyncExtension: FIFinderSync {
     // MARK: - Icon Overlays (Badges)
     
     override func beginObservingDirectory(at url: URL) {
-        // Start watching the directory for Git status changes
-        Task {
-            await refreshStatusForDirectory(url)
-        }
+        logger.notice("beginObservingDirectory: \(url.path)")
+        // Load cached status from App Group
+        loadStatusCacheForDirectory(url)
     }
     
     override func endObservingDirectory(at url: URL) {
@@ -96,11 +148,11 @@ class FinderSyncExtension: FIFinderSync {
         
         if let cachedStatus = statusCache[path] {
             setBadge(for: url, status: cachedStatus)
+        } else if let parentStatus = findParentDirectoryStatus(for: path) {
+            statusCache[path] = parentStatus
+            setBadge(for: url, status: parentStatus)
         } else {
-            // Refresh status async
-            Task {
-                await refreshStatusForFile(url)
-            }
+            loadStatusFromAppGroup(for: url)
         }
     }
     
@@ -128,61 +180,143 @@ class FinderSyncExtension: FIFinderSync {
         FIFinderSyncController.default().setBadgeIdentifier(badgeIdentifier, for: url)
     }
     
-    private func refreshStatusForDirectory(_ url: URL) async {
-        let runner = GitCommandRunner.shared
+    // MARK: - Status from App Group Cache
+    
+    private func loadStatusCacheForDirectory(_ url: URL) {
+        let prefs = RepositoryPreferences.shared
+        let repoRoots = prefs.readMonitoredRepoRoots()
+        let dirPath = url.path
         
-        guard await runner.isGitRepository(at: url.path) else { return }
-        
-        do {
-            let entries = try await runner.status(at: url.path)
-            let repoRoot = try await runner.repositoryRoot(at: url.path)
-            
-            for entry in entries {
-                let fullPath = (repoRoot as NSString).appendingPathComponent(entry.filePath)
-                statusCache[fullPath] = entry.displayStatus
+        for root in repoRoots {
+            if dirPath.hasPrefix(root + "/") || dirPath == root {
+                if let cached = prefs.readStatusCache(repoPath: root) {
+                    for entry in cached {
+                        if let fileStatus = GitFileStatus(rawValue: entry.status) {
+                            statusCache[entry.path] = fileStatus
+                        }
+                    }
+                    logger.notice("Loaded \(cached.count) cached statuses from App Group for \(root)")
+                }
+                return
             }
-            
-            // Request badge refresh for visible items
-            for entry in entries {
-                let fullPath = (repoRoot as NSString).appendingPathComponent(entry.filePath)
-                let fileURL = URL(fileURLWithPath: fullPath)
-                setBadge(for: fileURL, status: entry.displayStatus)
-            }
-        } catch {
-            NSLog("TortoiseGitMac: Failed to get status for \(url.path): \(error)")
         }
     }
     
-    private func refreshStatusForFile(_ url: URL) async {
-        // Find repository root for this file
-        let dir = url.deletingLastPathComponent().path
-        let runner = GitCommandRunner.shared
+    private func reloadAllStatusFromCache() {
+        let prefs = RepositoryPreferences.shared
+        let repoRoots = prefs.readMonitoredRepoRoots()
+        var newCache: [String: GitFileStatus] = [:]
         
-        guard await runner.isGitRepository(at: dir) else { return }
+        for root in repoRoots {
+            if let cached = prefs.readStatusCache(repoPath: root) {
+                for entry in cached {
+                    if let fileStatus = GitFileStatus(rawValue: entry.status) {
+                        newCache[entry.path] = fileStatus
+                    }
+                }
+            }
+        }
         
-        do {
-            let repoRoot = try await runner.repositoryRoot(at: dir)
-            let entries = try await runner.status(at: repoRoot)
-            
-            for entry in entries {
-                let fullPath = (repoRoot as NSString).appendingPathComponent(entry.filePath)
-                statusCache[fullPath] = entry.displayStatus
+        // Only update if there's a change
+        if newCache != statusCache {
+            statusCache = newCache
+            // Re-apply badges for monitored directories
+            for dir in monitoredDirectories {
+                // Touch the directory to force Finder to re-request badges
+                FIFinderSyncController.default().setBadgeIdentifier("", for: dir)
+            }
+            logger.notice("Refreshed status cache: \(newCache.count) entries")
+        }
+    }
+    
+    /// Find git repository root by walking up the directory tree looking for .git
+    private func findGitRoot(from path: String) -> String? {
+        let fm = FileManager.default
+        var current = path
+        
+        // If path is a file, start from its directory
+        var isDir: ObjCBool = false
+        if fm.fileExists(atPath: current, isDirectory: &isDir), !isDir.boolValue {
+            current = (current as NSString).deletingLastPathComponent
+        }
+        
+        while current != "/" && !current.isEmpty {
+            let gitDir = (current as NSString).appendingPathComponent(".git")
+            if fm.fileExists(atPath: gitDir) {
+                return current
+            }
+            current = (current as NSString).deletingLastPathComponent
+        }
+        return nil
+    }
+    
+    /// Load status from the App Group shared cache written by the main app
+    private func loadStatusFromAppGroup(for url: URL) {
+        // Try to find repo root from known roots
+        let prefs = RepositoryPreferences.shared
+        let repoRoots = prefs.readMonitoredRepoRoots()
+        
+        // Find which repo root this file belongs to
+        let filePath = url.path
+        var matchingRoot: String?
+        for root in repoRoots {
+            if filePath.hasPrefix(root + "/") || filePath == root {
+                matchingRoot = root
+                break
+            }
+        }
+        
+        // Also try finding .git directory locally
+        if matchingRoot == nil {
+            matchingRoot = findGitRoot(from: filePath)
+        }
+        
+        guard let repoRoot = matchingRoot else {
+            return
+        }
+        
+        // Read cached status
+        if let cached = prefs.readStatusCache(repoPath: repoRoot) {
+            // Populate status cache
+            for entry in cached {
+                if let fileStatus = GitFileStatus(rawValue: entry.status) {
+                    statusCache[entry.path] = fileStatus
+                }
             }
             
-            if let cachedStatus = statusCache[url.path] {
-                setBadge(for: url, status: cachedStatus)
+            if let fileStatus = statusCache[filePath] {
+                setBadge(for: url, status: fileStatus)
+            } else if let parentStatus = findParentDirectoryStatus(for: filePath) {
+                // File inside an untracked/ignored directory inherits parent status
+                statusCache[filePath] = parentStatus
+                setBadge(for: url, status: parentStatus)
             } else {
-                // File is tracked and unmodified
+                // File not in status output = tracked and unmodified
                 setBadge(for: url, status: .unmodified)
             }
-        } catch {
-            NSLog("TortoiseGitMac: Failed to refresh status for \(url.path): \(error)")
+            
+            logger.notice("Loaded \(cached.count) cached statuses for repo \(repoRoot)")
         }
+    }
+    
+    /// Check if a file's parent directory has a status (e.g. untracked directory)
+    private func findParentDirectoryStatus(for path: String) -> GitFileStatus? {
+        // Walk up the path checking if any parent directory is in the status cache
+        var current = (path as NSString).deletingLastPathComponent
+        while !current.isEmpty && current != "/" {
+            if let status = statusCache[current] {
+                return status
+            }
+            // Also check with trailing slash removed (git status may report without)
+            current = (current as NSString).deletingLastPathComponent
+        }
+        return nil
     }
     
     // MARK: - Context Menu
     
     override func menu(for menuKind: FIMenuKind) -> NSMenu {
+        logger.notice("menu(for:) called, menuKind=\(String(describing: menuKind))")
         let menu = NSMenu(title: "TortoiseGitMac")
         
         guard let target = FIFinderSyncController.default().targetedURL() else {
@@ -246,131 +380,70 @@ class FinderSyncExtension: FIFinderSync {
         return menu
     }
     
-    // MARK: - Menu Actions
+    // MARK: - Menu Actions (delegate to main app via URL scheme)
+    
+    private func openMainApp(action: String, path: String, extraParams: String = "") {
+        let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let urlString = "tortoisegitmac://\(action)?path=\(encodedPath)\(extraParams)"
+        if let url = URL(string: urlString) {
+            NSWorkspace.shared.open(url)
+        }
+    }
     
     @objc func gitPull(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        
-        Task {
-            do {
-                try await GitCommandRunner.shared.pull(at: target.path)
-                await refreshStatusForDirectory(target)
-                showNotification(title: "Git Pull", message: "Pull completed successfully.")
-            } catch {
-                showError(error)
-            }
-        }
+        openMainApp(action: "pull", path: target.path)
     }
     
     @objc func gitPush(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        
-        Task {
-            do {
-                try await GitCommandRunner.shared.push(at: target.path)
-                showNotification(title: "Git Push", message: "Push completed successfully.")
-            } catch {
-                showError(error)
-            }
-        }
+        openMainApp(action: "push", path: target.path)
     }
     
     @objc func gitCommit(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        
-        // Open commit dialog in the main app
-        let url = URL(string: "tortoisegitmac://commit?path=\(target.path.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")!
-        NSWorkspace.shared.open(url)
+        openMainApp(action: "commit", path: target.path)
     }
     
     @objc func gitFetch(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        
-        Task {
-            do {
-                try await GitCommandRunner.shared.fetch(at: target.path)
-                showNotification(title: "Git Fetch", message: "Fetch completed successfully.")
-            } catch {
-                showError(error)
-            }
-        }
+        openMainApp(action: "fetch", path: target.path)
     }
     
     @objc func gitDiff(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
         let selectedItems = FIFinderSyncController.default().selectedItemURLs() ?? []
-        
         let filePath = selectedItems.first?.path ?? ""
-        let encodedPath = target.path.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let encodedFile = filePath.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        
-        if let url = URL(string: "tortoisegitmac://diff?path=\(encodedPath)&file=\(encodedFile)") {
-            NSWorkspace.shared.open(url)
-        }
+        openMainApp(action: "diff", path: target.path, extraParams: "&file=\(encodedFile)")
     }
     
     @objc func gitLog(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        
-        let encodedPath = target.path.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        if let url = URL(string: "tortoisegitmac://log?path=\(encodedPath)") {
-            NSWorkspace.shared.open(url)
-        }
+        openMainApp(action: "log", path: target.path)
     }
     
     @objc func gitAdd(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
         let selectedItems = FIFinderSyncController.default().selectedItemURLs() ?? []
-        
-        let files = selectedItems.map(\.lastPathComponent)
-        guard !files.isEmpty else { return }
-        
-        Task {
-            do {
-                try await GitCommandRunner.shared.add(at: target.path, files: files)
-                await refreshStatusForDirectory(target)
-                showNotification(title: "Git Add", message: "Files staged successfully.")
-            } catch {
-                showError(error)
-            }
-        }
+        let files = selectedItems.map(\.lastPathComponent).joined(separator: ",")
+        let encodedFiles = files.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        openMainApp(action: "add", path: target.path, extraParams: "&files=\(encodedFiles)")
     }
     
     @objc func gitStashSave(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        
-        Task {
-            do {
-                try await GitCommandRunner.shared.stashSave(at: target.path, message: nil)
-                await refreshStatusForDirectory(target)
-                showNotification(title: "Git Stash", message: "Changes stashed successfully.")
-            } catch {
-                showError(error)
-            }
-        }
+        openMainApp(action: "stash-save", path: target.path)
     }
     
     @objc func gitStashPop(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        
-        Task {
-            do {
-                try await GitCommandRunner.shared.stashPop(at: target.path)
-                await refreshStatusForDirectory(target)
-                showNotification(title: "Git Stash Pop", message: "Stash applied successfully.")
-            } catch {
-                showError(error)
-            }
-        }
+        openMainApp(action: "stash-pop", path: target.path)
     }
     
     @objc func gitStashList(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        
-        let encodedPath = target.path.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        if let url = URL(string: "tortoisegitmac://stash-list?path=\(encodedPath)") {
-            NSWorkspace.shared.open(url)
-        }
+        openMainApp(action: "stash-list", path: target.path)
     }
     
     // MARK: - Helpers

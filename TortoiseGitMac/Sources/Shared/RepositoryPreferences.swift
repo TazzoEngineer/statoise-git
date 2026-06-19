@@ -11,6 +11,12 @@ struct MonitoredRepository: Codable, Equatable {
     }
 }
 
+/// Cached git file status entry for sharing between App and Extension
+struct CachedFileStatus: Codable {
+    let path: String
+    let status: String // GitFileStatus rawValue
+}
+
 /// Manages user preferences shared between the app and the Finder extension
 /// via App Group (UserDefaults suite)
 class RepositoryPreferences {
@@ -18,9 +24,13 @@ class RepositoryPreferences {
     static let shared = RepositoryPreferences()
     
     /// App Group identifier for sharing data between app and extension
-    static let appGroupIdentifier = "group.com.tortoisegitmac"
+    /// Matches $(TeamIdentifierPrefix)com.tortoisegitmac in entitlements
+    static let appGroupIdentifier = "7H8HPZ8M25.com.tortoisegitmac"
     
     private let defaults: UserDefaults
+    
+    /// Shared container directory for App Group file exchange
+    private let containerURL: URL?
     
     private enum Keys {
         static let repositories = "monitoredRepositories"
@@ -30,13 +40,31 @@ class RepositoryPreferences {
     init() {
         defaults = UserDefaults(suiteName: RepositoryPreferences.appGroupIdentifier)
             ?? UserDefaults.standard
+        containerURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: RepositoryPreferences.appGroupIdentifier
+        )
     }
     
     // MARK: - Git Path
     
+    /// Returns the real git binary path, avoiding /usr/bin/git which is an xcrun shim
+    /// that doesn't work in App Sandbox.
+    private static let defaultGitPath: String = {
+        let candidates = [
+            "/Applications/Xcode.app/Contents/Developer/usr/bin/git",
+            "/Library/Developer/CommandLineTools/usr/bin/git"
+        ]
+        for path in candidates {
+            if FileManager.default.isExecutableFile(atPath: path) {
+                return path
+            }
+        }
+        return "/usr/bin/git"
+    }()
+    
     var gitPath: String {
         get {
-            defaults.string(forKey: Keys.gitPath) ?? "/usr/bin/git"
+            defaults.string(forKey: Keys.gitPath) ?? Self.defaultGitPath
         }
         set {
             defaults.set(newValue, forKey: Keys.gitPath)
@@ -77,5 +105,49 @@ class RepositoryPreferences {
     /// Returns paths of all enabled repositories
     var enabledRepositoryPaths: [String] {
         repositories.filter(\.isEnabled).map(\.path)
+    }
+    
+    // MARK: - Git Status Cache (App Group shared file)
+    
+    private func statusCacheURL(forRepoPath repoPath: String) -> URL? {
+        guard let container = containerURL else { return nil }
+        let statusDir = container.appendingPathComponent("StatusCache", isDirectory: true)
+        try? FileManager.default.createDirectory(at: statusDir, withIntermediateDirectories: true)
+        // Use hash of repo path as filename to avoid path issues
+        let hash = repoPath.data(using: .utf8)!.map { String(format: "%02x", $0) }.joined()
+        let safeHash = String(hash.prefix(40))
+        return statusDir.appendingPathComponent("\(safeHash).json")
+    }
+    
+    /// Write git status cache (called by main App)
+    func writeStatusCache(repoPath: String, entries: [CachedFileStatus]) {
+        guard let url = statusCacheURL(forRepoPath: repoPath) else { return }
+        if let data = try? JSONEncoder().encode(entries) {
+            try? data.write(to: url, options: .atomic)
+        }
+    }
+    
+    /// Read git status cache (called by Finder Extension)
+    func readStatusCache(repoPath: String) -> [CachedFileStatus]? {
+        guard let url = statusCacheURL(forRepoPath: repoPath) else { return nil }
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return try? JSONDecoder().decode([CachedFileStatus].self, from: data)
+    }
+    
+    /// Write all repo roots being monitored so Extension can find them
+    func writeMonitoredRepoRoots(_ roots: [String]) {
+        guard let container = containerURL else { return }
+        let url = container.appendingPathComponent("repo_roots.json")
+        if let data = try? JSONEncoder().encode(roots) {
+            try? data.write(to: url, options: .atomic)
+        }
+    }
+    
+    /// Read monitored repo roots (called by Extension)
+    func readMonitoredRepoRoots() -> [String] {
+        guard let container = containerURL else { return [] }
+        let url = container.appendingPathComponent("repo_roots.json")
+        guard let data = try? Data(contentsOf: url) else { return [] }
+        return (try? JSONDecoder().decode([String].self, from: data)) ?? []
     }
 }
