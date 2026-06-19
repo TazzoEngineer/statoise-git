@@ -4,11 +4,20 @@ class CommitWindowController: NSWindowController {
     
     private let repositoryPath: String
     private var statusEntries: [GitStatusEntry] = []
+    private var allTrackedFiles: [GitStatusEntry] = []  // All files including unmodified
+    private var showUnmodified = false
     private var fileTableView: NSTableView!
     private var messageTextView: NSTextView!
     private var selectAllCheckbox: NSButton!
+    private var showUnmodifiedCheckbox: NSButton!
     private var selectedFiles: Set<String> = []
     private var branchLabel: NSTextField!
+    private var changesLabel: NSTextField!
+    
+    /// The currently displayed entries (filtered by showUnmodified)
+    private var displayedEntries: [GitStatusEntry] {
+        return showUnmodified ? allTrackedFiles : statusEntries
+    }
     
     init(repositoryPath: String) {
         self.repositoryPath = repositoryPath
@@ -67,10 +76,17 @@ class CommitWindowController: NSWindowController {
         contentView.addSubview(scrollViewMsg)
         
         // "Changes:" label
-        let changesLabel = NSTextField(labelWithString: "Changes:")
+        changesLabel = NSTextField(labelWithString: "Changes:")
         changesLabel.frame = NSRect(x: 10, y: 362, width: 200, height: 20)
         changesLabel.autoresizingMask = [.minYMargin]
         contentView.addSubview(changesLabel)
+        
+        // Show Unmodified checkbox
+        showUnmodifiedCheckbox = NSButton(checkboxWithTitle: "Show Unmodified", target: self, action: #selector(toggleShowUnmodified(_:)))
+        showUnmodifiedCheckbox.frame = NSRect(x: 420, y: 362, width: 150, height: 20)
+        showUnmodifiedCheckbox.autoresizingMask = [.minXMargin, .minYMargin]
+        showUnmodifiedCheckbox.state = .off
+        contentView.addSubview(showUnmodifiedCheckbox)
         
         // Select All checkbox
         selectAllCheckbox = NSButton(checkboxWithTitle: "Select All", target: self, action: #selector(toggleSelectAll(_:)))
@@ -134,13 +150,25 @@ class CommitWindowController: NSWindowController {
     private func loadStatus() {
         Task {
             do {
-                let branch = try await GitCommandRunner.shared.currentBranch(at: repositoryPath)
-                let entries = try await GitCommandRunner.shared.status(at: repositoryPath)
+                let runner = GitCommandRunner.shared
+                let branch = try await runner.currentBranch(at: repositoryPath)
+                let entries = try await runner.status(at: repositoryPath)
+                let tracked = try await runner.listTrackedFiles(at: repositoryPath)
                 
                 await MainActor.run {
                     self.branchLabel.stringValue = "Branch: \(branch)"
                     self.statusEntries = entries
+                    
+                    // Build allTrackedFiles: modified/untracked files + unmodified tracked files
+                    let changedPaths = Set(entries.map(\.filePath))
+                    let unmodifiedEntries = tracked
+                        .filter { !changedPaths.contains($0) }
+                        .map { GitStatusEntry(indexStatus: .unmodified, workTreeStatus: .unmodified, filePath: $0, originalPath: nil) }
+                    self.allTrackedFiles = entries + unmodifiedEntries
+                    
+                    // Only select modified/untracked files by default
                     self.selectedFiles = Set(entries.map(\.filePath))
+                    self.updateChangesLabel()
                     self.fileTableView.reloadData()
                 }
             } catch {
@@ -152,21 +180,35 @@ class CommitWindowController: NSWindowController {
         }
     }
     
+    private func updateChangesLabel() {
+        let displayed = displayedEntries
+        let selected = displayed.filter { selectedFiles.contains($0.filePath) }.count
+        changesLabel.stringValue = "Changes: \(selected)/\(displayed.count) selected"
+    }
+    
     // MARK: - Actions
     
     @objc private func toggleSelectAll(_ sender: NSButton) {
         if sender.state == .on {
-            selectedFiles = Set(statusEntries.map(\.filePath))
+            selectedFiles = Set(displayedEntries.map(\.filePath))
         } else {
             selectedFiles.removeAll()
         }
+        updateChangesLabel()
+        fileTableView.reloadData()
+    }
+    
+    @objc private func toggleShowUnmodified(_ sender: NSButton) {
+        showUnmodified = (sender.state == .on)
+        updateChangesLabel()
         fileTableView.reloadData()
     }
     
     @objc private func fileCheckboxToggled(_ sender: NSButton) {
         let row = sender.tag
-        guard row >= 0, row < statusEntries.count else { return }
-        let filePath = statusEntries[row].filePath
+        let entries = displayedEntries
+        guard row >= 0, row < entries.count else { return }
+        let filePath = entries[row].filePath
         
         if sender.state == .on {
             selectedFiles.insert(filePath)
@@ -175,13 +217,16 @@ class CommitWindowController: NSWindowController {
         }
         
         // Update select all state
-        if selectedFiles.count == statusEntries.count {
+        let displayCount = entries.count
+        let selectedCount = entries.filter { selectedFiles.contains($0.filePath) }.count
+        if selectedCount == displayCount {
             selectAllCheckbox.state = .on
-        } else if selectedFiles.isEmpty {
+        } else if selectedCount == 0 {
             selectAllCheckbox.state = .off
         } else {
             selectAllCheckbox.state = .mixed
         }
+        updateChangesLabel()
     }
     
     @objc private func doCommit(_ sender: Any?) {
@@ -231,11 +276,13 @@ class CommitWindowController: NSWindowController {
 extension CommitWindowController: NSTableViewDataSource, NSTableViewDelegate {
     
     func numberOfRows(in tableView: NSTableView) -> Int {
-        return statusEntries.count
+        return displayedEntries.count
     }
     
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-        let entry = statusEntries[row]
+        let entries = displayedEntries
+        guard row < entries.count else { return nil }
+        let entry = entries[row]
         
         switch tableColumn?.identifier.rawValue {
         case "check":

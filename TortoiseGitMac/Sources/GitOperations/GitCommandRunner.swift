@@ -100,6 +100,15 @@ actor GitCommandRunner {
         return parseStatus(output)
     }
     
+    /// List all tracked files in the repository
+    func listTrackedFiles(at path: String) async throws -> [String] {
+        let output = try await runGit(
+            arguments: ["ls-files", "-z"],
+            workingDirectory: path
+        )
+        return output.split(separator: "\0", omittingEmptySubsequences: true).map(String.init)
+    }
+    
     private func parseStatus(_ output: String) -> [GitStatusEntry] {
         var entries: [GitStatusEntry] = []
         let items = output.split(separator: "\0", omittingEmptySubsequences: false)
