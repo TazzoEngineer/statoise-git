@@ -35,6 +35,7 @@ class RepositoryPreferences {
     private enum Keys {
         static let repositories = "monitoredRepositories"
         static let gitPath = "gitExecutablePath"
+        static let externalDiffTool = "externalDiffToolPath"
     }
     
     init() {
@@ -71,10 +72,21 @@ class RepositoryPreferences {
         }
     }
     
+    /// External diff tool path (e.g., /Applications/DiffMerge.app, /usr/local/bin/meld)
+    var externalDiffTool: String {
+        get {
+            defaults.string(forKey: Keys.externalDiffTool) ?? ""
+        }
+        set {
+            defaults.set(newValue, forKey: Keys.externalDiffTool)
+        }
+    }
+    
     // MARK: - Repositories
     
     var repositories: [MonitoredRepository] {
         get {
+            defaults.synchronize()
             guard let data = defaults.data(forKey: Keys.repositories),
                   let repos = try? JSONDecoder().decode([MonitoredRepository].self, from: data) else {
                 return []
@@ -84,6 +96,7 @@ class RepositoryPreferences {
         set {
             if let data = try? JSONEncoder().encode(newValue) {
                 defaults.set(data, forKey: Keys.repositories)
+                defaults.synchronize()
             }
         }
     }
@@ -113,10 +126,9 @@ class RepositoryPreferences {
         guard let container = containerURL else { return nil }
         let statusDir = container.appendingPathComponent("StatusCache", isDirectory: true)
         try? FileManager.default.createDirectory(at: statusDir, withIntermediateDirectories: true)
-        // Use hash of repo path as filename to avoid path issues
+        // Use full hex encoding of repo path as filename
         let hash = repoPath.data(using: .utf8)!.map { String(format: "%02x", $0) }.joined()
-        let safeHash = String(hash.prefix(40))
-        return statusDir.appendingPathComponent("\(safeHash).json")
+        return statusDir.appendingPathComponent("\(hash).json")
     }
     
     /// Write git status cache (called by main App)

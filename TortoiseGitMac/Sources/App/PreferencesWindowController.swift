@@ -4,6 +4,7 @@ class PreferencesWindowController: NSWindowController {
     
     private var repositoryListView: NSTableView!
     private var repositories: [MonitoredRepository] = []
+    private var diffToolField: NSTextField!
     
     init() {
         let window = NSWindow(
@@ -97,6 +98,29 @@ class PreferencesWindowController: NSWindowController {
         gitPathField.action = #selector(gitPathChanged(_:))
         view.addSubview(gitPathField)
         
+        // External Diff Tool
+        let diffToolLabel = NSTextField(labelWithString: "External Diff Tool:")
+        diffToolLabel.frame = NSRect(x: 20, y: 250, width: 150, height: 20)
+        view.addSubview(diffToolLabel)
+        
+        diffToolField = NSTextField(frame: NSRect(x: 180, y: 248, width: 280, height: 24))
+        diffToolField.stringValue = RepositoryPreferences.shared.externalDiffTool
+        diffToolField.placeholderString = "/Applications/DiffMerge.app or empty for built-in"
+        diffToolField.target = self
+        diffToolField.action = #selector(diffToolChanged(_:))
+        view.addSubview(diffToolField)
+        
+        let diffToolBrowse = NSButton(title: "Browse...", target: self, action: #selector(browseDiffTool(_:)))
+        diffToolBrowse.frame = NSRect(x: 465, y: 247, width: 80, height: 26)
+        diffToolBrowse.bezelStyle = .rounded
+        view.addSubview(diffToolBrowse)
+        
+        let diffToolHint = NSTextField(labelWithString: "Leave empty to use built-in diff viewer. Supports .app bundles and command-line tools.")
+        diffToolHint.frame = NSRect(x: 180, y: 225, width: 370, height: 20)
+        diffToolHint.font = NSFont.systemFont(ofSize: 10)
+        diffToolHint.textColor = .secondaryLabelColor
+        view.addSubview(diffToolHint)
+        
         return view
     }
     
@@ -128,6 +152,25 @@ class PreferencesWindowController: NSWindowController {
     
     @objc private func gitPathChanged(_ sender: NSTextField) {
         RepositoryPreferences.shared.gitPath = sender.stringValue
+    }
+    
+    @objc private func diffToolChanged(_ sender: NSTextField) {
+        RepositoryPreferences.shared.externalDiffTool = sender.stringValue
+    }
+    
+    @objc private func browseDiffTool(_ sender: Any?) {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [.application, .executable]
+        panel.prompt = "Select Diff Tool"
+        
+        panel.begin { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            RepositoryPreferences.shared.externalDiffTool = url.path
+            self?.diffToolField.stringValue = url.path
+        }
     }
     
     private func loadRepositories() {

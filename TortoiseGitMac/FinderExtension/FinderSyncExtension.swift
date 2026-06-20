@@ -55,6 +55,7 @@ class FinderSyncExtension: FIFinderSync {
         
         // Periodically refresh from App Group cache
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            self?.reloadMonitoredDirectories()
             self?.reloadAllStatusFromCache()
         }
     }
@@ -113,16 +114,22 @@ class FinderSyncExtension: FIFinderSync {
     
     private func reloadMonitoredDirectories() {
         let repos = RepositoryPreferences.shared.enabledRepositoryPaths
-        monitoredDirectories = Set(repos.compactMap { URL(fileURLWithPath: $0) })
+        let newDirs = Set(repos.compactMap { URL(fileURLWithPath: $0) })
         
-        if monitoredDirectories.isEmpty {
+        let effectiveDirs: Set<URL>
+        if newDirs.isEmpty {
             // Default to home directory so the extension stays active
-            monitoredDirectories = [URL(fileURLWithPath: NSHomeDirectory())]
-            logger.notice("No repositories configured, monitoring home directory")
+            effectiveDirs = [URL(fileURLWithPath: NSHomeDirectory())]
+        } else {
+            effectiveDirs = newDirs
         }
         
-        FIFinderSyncController.default().directoryURLs = monitoredDirectories
-        logger.notice("Monitoring \(self.monitoredDirectories.count) directories: \(self.monitoredDirectories.map(\.path).joined(separator: ", "))")
+        // Only update if changed
+        if effectiveDirs != monitoredDirectories {
+            monitoredDirectories = effectiveDirs
+            FIFinderSyncController.default().directoryURLs = monitoredDirectories
+            logger.notice("Monitoring \(self.monitoredDirectories.count) directories: \(self.monitoredDirectories.map(\.path).joined(separator: ", "))")
+        }
     }
     
     @objc private func preferencesChanged() {

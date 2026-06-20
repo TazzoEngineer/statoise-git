@@ -165,8 +165,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func showDiffWindow(repositoryPath: String, file: String?) {
-        let controller = DiffWindowController(repositoryPath: repositoryPath, file: file)
-        diffWindowControllers.append(controller)
-        controller.showWindow(self)
+        let externalTool = RepositoryPreferences.shared.externalDiffTool
+        if !externalTool.isEmpty, let file = file, !file.isEmpty {
+            Task {
+                do {
+                    let root = try await GitCommandRunner.shared.repositoryRoot(at: repositoryPath)
+                    let headContent = try await GitCommandRunner.shared.exportFileAtRevision(
+                        at: root, hash: "HEAD", file: file
+                    )
+                    let workingFile = (root as NSString).appendingPathComponent(file)
+                    await MainActor.run {
+                        ExternalDiffLauncher.launch(tool: externalTool, oldFile: headContent, newFile: workingFile)
+                    }
+                } catch {
+                    await MainActor.run {
+                        let controller = DiffWindowController(repositoryPath: repositoryPath, file: file)
+                        self.diffWindowControllers.append(controller)
+                        controller.showWindow(self)
+                    }
+                }
+            }
+        } else {
+            let controller = DiffWindowController(repositoryPath: repositoryPath, file: file)
+            diffWindowControllers.append(controller)
+            controller.showWindow(self)
+        }
     }
 }

@@ -14,7 +14,9 @@
 		12BC31BE384B94F4CE4377FF /* FinderSync.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FC51C52B3D5DB6D6CC8832C8 /* FinderSync.framework */; };
 		1A3CEE1D53BC0697542F1531 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E0336277689D44B6DC382BBA /* UserNotifications.framework */; };
 		269CB71E7B8AADCADC97EA75 /* LogWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17FC7E06BBD6067F490A3A95 /* LogWindowController.swift */; };
+		A1B2C3D4E5F60718A9B0C1D2 /* GitGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718A9B0C1D3 /* GitGraphView.swift */; };
 		2821A5EE1B006B2E30D2EDE7 /* DiffWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC94264A2C1B175EB0CBA53 /* DiffWindowController.swift */; };
+		E1D2F3A4B5C60798D0E1F2A3 /* ExternalDiffLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1D2F3A4B5C60798D0E1F2A4 /* ExternalDiffLauncher.swift */; };
 		35BA128B4F4E43839C269609 /* DeletedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 5D95303EFD0A647517E3310E /* DeletedIcon.png */; };
 		3677AFD82737E1FE43BB8F04 /* FinderSyncExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = D690F6364453B6E9EBED9FFC /* FinderSyncExtension.swift */; };
 		38B12E62F62AA30E9B5A836E /* GitCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A022E2A13035B9CBA4420A0F /* GitCommandRunner.swift */; };
@@ -72,11 +74,13 @@
 		1380143AEA15DF26D94C25AA /* CommitWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitWindowController.swift; sourceTree = "<group>"; };
 		17F9A9589251930E5EBBA8B8 /* UnversionedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = UnversionedIcon.png; sourceTree = "<group>"; };
 		17FC7E06BBD6067F490A3A95 /* LogWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogWindowController.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718A9B0C1D3 /* GitGraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitGraphView.swift; sourceTree = "<group>"; };
 		1D41B54C9A9BDF697F039484 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		350FA1A3AAE55EC04D68610B /* AddedIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AddedIcon@2x.png"; sourceTree = "<group>"; };
 		36B90AB5F6651101759BD685 /* TortoiseGitMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TortoiseGitMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E72DE4CD33765327B4E6608 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4CC94264A2C1B175EB0CBA53 /* DiffWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffWindowController.swift; sourceTree = "<group>"; };
+		E1D2F3A4B5C60798D0E1F2A4 /* ExternalDiffLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalDiffLauncher.swift; sourceTree = "<group>"; };
 		4EB3D85239C4EFDA1A26A374 /* ModifiedIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ModifiedIcon@2x.png"; sourceTree = "<group>"; };
 		5D00F7B47428FE3A17E52DF6 /* ConflictIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ConflictIcon@2x.png"; sourceTree = "<group>"; };
 		5D95303EFD0A647517E3310E /* DeletedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = DeletedIcon.png; sourceTree = "<group>"; };
@@ -190,8 +194,10 @@
 				F77632B69F8A3F1BF84AE362 /* AppDelegate.swift */,
 				1380143AEA15DF26D94C25AA /* CommitWindowController.swift */,
 				4CC94264A2C1B175EB0CBA53 /* DiffWindowController.swift */,
+				E1D2F3A4B5C60798D0E1F2A4 /* ExternalDiffLauncher.swift */,
 				9FA92692DDAB77A56B7986D8 /* GitStatusService.swift */,
 				1D41B54C9A9BDF697F039484 /* Info.plist */,
+				A1B2C3D4E5F60718A9B0C1D3 /* GitGraphView.swift */,
 				17FC7E06BBD6067F490A3A95 /* LogWindowController.swift */,
 				BB808CE2E7878A0463B857AC /* main.swift */,
 				B534763F96EF4486A487D33F /* MainMenu.swift */,
@@ -330,8 +336,10 @@
 				7E063CC74730ADD387C0C04C /* AppDelegate.swift in Sources */,
 				612876BA25DDC98D06EB0277 /* CommitWindowController.swift in Sources */,
 				2821A5EE1B006B2E30D2EDE7 /* DiffWindowController.swift in Sources */,
+				E1D2F3A4B5C60798D0E1F2A3 /* ExternalDiffLauncher.swift in Sources */,
 				6C3E8D9B82700C14444DD353 /* GitCommandRunner.swift in Sources */,
 				D70665C017E905E6AF4F371A /* GitStatusService.swift in Sources */,
+				A1B2C3D4E5F60718A9B0C1D2 /* GitGraphView.swift in Sources */,
 				269CB71E7B8AADCADC97EA75 /* LogWindowController.swift in Sources */,
 				4AC078D19731B585F9F9E08B /* MainMenu.swift in Sources */,
 				EC254392F67D01A405A91F22 /* PreferencesWindowController.swift in Sources */,

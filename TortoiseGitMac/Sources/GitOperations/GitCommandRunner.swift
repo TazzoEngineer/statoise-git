@@ -3,6 +3,17 @@ import os.log
 
 private let gitLogger = Logger(subsystem: "com.tortoisegitmac.app", category: "GitCommandRunner")
 
+/// Parsed commit entry for the log view
+struct LogEntry {
+    let hash: String
+    let shortHash: String
+    let author: String
+    let date: String
+    let subject: String
+    let refs: String
+    let parents: [String]  // parent commit hashes
+}
+
 /// Represents a Git file status
 enum GitFileStatus: String {
     case unmodified = " "
@@ -70,10 +81,13 @@ actor GitCommandRunner {
             gitLogger.error("Process.run() failed for git \(arguments.joined(separator: " "), privacy: .public): \(error.localizedDescription, privacy: .public)")
             throw error
         }
-        process.waitUntilExit()
         
+        // Read data BEFORE waiting for exit to avoid deadlock
+        // (pipe buffer can fill up with large output, blocking the process)
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+        
+        process.waitUntilExit()
         
         let output = String(data: outputData, encoding: .utf8) ?? ""
         let errorOutput = String(data: errorData, encoding: .utf8) ?? ""
@@ -93,18 +107,20 @@ actor GitCommandRunner {
     // MARK: - Status
     
     func status(at path: String) async throws -> [GitStatusEntry] {
+        let root = try await repositoryRoot(at: path)
         let output = try await runGit(
             arguments: ["status", "--porcelain=v1", "-z", "-uall"],
-            workingDirectory: path
+            workingDirectory: root
         )
         return parseStatus(output)
     }
     
     /// List all tracked files in the repository
     func listTrackedFiles(at path: String) async throws -> [String] {
+        let root = try await repositoryRoot(at: path)
         let output = try await runGit(
             arguments: ["ls-files", "-z"],
-            workingDirectory: path
+            workingDirectory: root
         )
         return output.split(separator: "\0", omittingEmptySubsequences: true).map(String.init)
     }
@@ -213,6 +229,148 @@ actor GitCommandRunner {
             ],
             workingDirectory: path
         )
+    }
+    
+    /// Get structured log entries for the table view
+    func logEntries(at path: String, maxCount: Int = 50) async throws -> [LogEntry] {
+        let separator = "---LOG_SEP---"
+        // Format: hash|short_hash|author|date|subject|refs|parents
+        let format = "%H\(separator)%h\(separator)%an\(separator)%ad\(separator)%s\(separator)%D\(separator)%P"
+        let output = try await runGit(
+            arguments: [
+                "log",
+                "--format=\(format)",
+                "--date=short",
+                "-n", String(maxCount)
+            ],
+            workingDirectory: path
+        )
+        
+        return output.split(separator: "\n", omittingEmptySubsequences: true).compactMap { line in
+            let parts = line.components(separatedBy: separator)
+            guard parts.count >= 5 else { return nil }
+            let parentStr = parts.count > 6 ? parts[6] : ""
+            let parents = parentStr.split(separator: " ").map(String.init)
+            return LogEntry(
+                hash: parts[0],
+                shortHash: parts[1],
+                author: parts[2],
+                date: parts[3],
+                subject: parts[4],
+                refs: parts.count > 5 ? parts[5] : "",
+                parents: parents
+            )
+        }
+    }
+    
+    /// Get full commit message for a given hash
+    func commitMessage(at path: String, hash: String) async throws -> String {
+        return try await runGit(
+            arguments: ["log", "-1", "--format=%B", hash],
+            workingDirectory: path
+        )
+    }
+    
+    /// Get list of changed files for a given commit (format: "M\tpath")
+    func commitFiles(at path: String, hash: String) async throws -> [String] {
+        let root = try await repositoryRoot(at: path)
+        // Use diff-tree with --root to handle initial commit
+        let output = try await runGit(
+            arguments: ["diff-tree", "--no-commit-id", "--root", "-r", "--name-status", hash],
+            workingDirectory: root
+        )
+        return output.split(separator: "\n", omittingEmptySubsequences: true).map(String.init)
+    }
+    
+    /// Get diff for a specific file at a specific commit (vs parent)
+    func commitFileDiff(at path: String, hash: String, file: String) async throws -> String {
+        let root = try await repositoryRoot(at: path)
+        return try await runGit(
+            arguments: ["diff", "\(hash)~1", hash, "--", file],
+            workingDirectory: root
+        )
+    }
+    
+    func commitDiff(at path: String, hash: String) async throws -> String {
+        let root = try await repositoryRoot(at: path)
+        return try await runGit(
+            arguments: ["diff", "\(hash)~1", hash],
+            workingDirectory: root
+        )
+    }
+
+    /// Export a file at a specific revision to a temp file, returns the temp file path
+    func exportFileAtRevision(at path: String, hash: String, file: String) async throws -> String {
+        let root = try await repositoryRoot(at: path)
+        let content = try await runGit(
+            arguments: ["show", "\(hash):\(file)"],
+            workingDirectory: root
+        )
+        
+        let fileName = (file as NSString).lastPathComponent
+        let ext = (fileName as NSString).pathExtension
+        let baseName = (fileName as NSString).deletingPathExtension
+        let tempDir = "/tmp"
+        let tempPath = (tempDir as NSString).appendingPathComponent("\(baseName)_\(hash.prefix(7)).\(ext)")
+        try content.write(toFile: tempPath, atomically: true, encoding: .utf8)
+        return tempPath
+    }
+    
+    /// Export file at parent revision
+    func exportFileAtParentRevision(at path: String, hash: String, file: String) async throws -> String {
+        let root = try await repositoryRoot(at: path)
+        let content: String
+        do {
+            content = try await runGit(
+                arguments: ["show", "\(hash)~1:\(file)"],
+                workingDirectory: root
+            )
+        } catch {
+            // File might not exist in parent (new file)
+            content = ""
+        }
+        
+        let fileName = (file as NSString).lastPathComponent
+        let ext = (fileName as NSString).pathExtension
+        let baseName = (fileName as NSString).deletingPathExtension
+        let tempDir = "/tmp"
+        let tempPath = (tempDir as NSString).appendingPathComponent("\(baseName)_\(hash.prefix(7))~1.\(ext)")
+        try content.write(toFile: tempPath, atomically: true, encoding: .utf8)
+        return tempPath
+    }
+    
+    /// Get log entries for a specific file
+    func fileLogEntries(at path: String, file: String, maxCount: Int = 100) async throws -> [LogEntry] {
+        let root = try await repositoryRoot(at: path)
+        let separator = "---LOG_SEP---"
+        let format = "%H\(separator)%h\(separator)%an\(separator)%ad\(separator)%s\(separator)%D\(separator)%P"
+        let output = try await runGit(
+            arguments: [
+                "log",
+                "--format=\(format)",
+                "--date=short",
+                "-n", String(maxCount),
+                "--follow",
+                "--", file
+            ],
+            workingDirectory: root
+        )
+        
+        return output.split(separator: "\n", omittingEmptySubsequences: true).compactMap { line in
+            let parts = line.components(separatedBy: separator)
+            guard parts.count >= 5 else { return nil }
+            let parentStr = parts.count > 6 ? parts[6] : ""
+            let parents = parentStr.split(separator: " ").map(String.init)
+            return LogEntry(
+                hash: parts[0],
+                shortHash: parts[1],
+                author: parts[2],
+                date: parts[3],
+                subject: parts[4],
+                refs: parts.count > 5 ? parts[5] : "",
+                parents: parents
+            )
+        }
     }
     
     func diff(at path: String, file: String? = nil) async throws -> String {

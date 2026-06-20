@@ -5,10 +5,12 @@ class DiffWindowController: NSWindowController {
     private let repositoryPath: String
     private let file: String?
     private var diffTextView: NSTextView!
+    private var preloadedDiff: String?
     
     init(repositoryPath: String, file: String?) {
         self.repositoryPath = repositoryPath
         self.file = file
+        self.preloadedDiff = nil
         
         let fileName = file ?? URL(fileURLWithPath: repositoryPath).lastPathComponent
         
@@ -25,6 +27,30 @@ class DiffWindowController: NSWindowController {
         super.init(window: window)
         setupUI()
         loadDiff()
+    }
+    
+    /// Initialize with pre-loaded diff content
+    init(repositoryPath: String, diffContent: String, title: String) {
+        self.repositoryPath = repositoryPath
+        self.file = nil
+        self.preloadedDiff = diffContent
+        
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
+            styleMask: [.titled, .closable, .resizable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Diff - \(title)"
+        window.center()
+        window.isReleasedWhenClosed = false
+        
+        super.init(window: window)
+        setupUI()
+        
+        // Display pre-loaded diff
+        diffTextView.string = diffContent
+        colorizeDiff(diffContent)
     }
     
     required init?(coder: NSCoder) {

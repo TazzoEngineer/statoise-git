@@ -126,6 +126,8 @@ class CommitWindowController: NSWindowController {
         fileTableView.addTableColumn(fileColumn)
         
         fileTableView.headerView = NSTableHeaderView()
+        fileTableView.doubleAction = #selector(fileDoubleClicked(_:))
+        fileTableView.target = self
         scrollView.documentView = fileTableView
         contentView.addSubview(scrollView)
         
@@ -268,6 +270,56 @@ class CommitWindowController: NSWindowController {
     
     @objc private func doCancel(_ sender: Any?) {
         window?.close()
+    }
+    
+    @objc private func fileDoubleClicked(_ sender: Any?) {
+        let row = fileTableView.clickedRow
+        guard row >= 0, row < displayedEntries.count else { return }
+        let entry = displayedEntries[row]
+        let file = entry.filePath
+        
+        let externalTool = RepositoryPreferences.shared.externalDiffTool
+        if !externalTool.isEmpty {
+            // External diff: HEAD vs working copy
+            Task {
+                do {
+                    let root = try await GitCommandRunner.shared.repositoryRoot(at: repositoryPath)
+                    let headFile = try await GitCommandRunner.shared.exportFileAtRevision(
+                        at: root, hash: "HEAD", file: file
+                    )
+                    let workingFile = (root as NSString).appendingPathComponent(file)
+                    await MainActor.run {
+                        ExternalDiffLauncher.launch(tool: externalTool, oldFile: headFile, newFile: workingFile)
+                    }
+                } catch {
+                    await MainActor.run {
+                        let alert = NSAlert(error: error)
+                        alert.runModal()
+                    }
+                }
+            }
+        } else {
+            // Built-in diff viewer
+            Task {
+                do {
+                    let diff = try await GitCommandRunner.shared.diff(at: repositoryPath, file: file)
+                    await MainActor.run {
+                        let diffWindow = DiffWindowController(
+                            repositoryPath: self.repositoryPath,
+                            diffContent: diff,
+                            title: file
+                        )
+                        diffWindow.showWindow(nil)
+                        diffWindow.window?.makeKeyAndOrderFront(nil)
+                    }
+                } catch {
+                    await MainActor.run {
+                        let alert = NSAlert(error: error)
+                        alert.runModal()
+                    }
+                }
+            }
+        }
     }
 }
 
