@@ -1,6 +1,6 @@
-name: TortoiseGitMac
+name: StatoiseGit
 options:
-  bundleIdPrefix: com.tortoisegitmac
+  bundleIdPrefix: com.statoisegit
   deploymentTarget:
     macOS: "13.0"
   xcodeVersion: "15.0"
@@ -10,9 +10,10 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     MACOSX_DEPLOYMENT_TARGET: "13.0"
+    CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
 
 targets:
-  TortoiseGitMac:
+  StatoiseGit:
     type: application
     platform: macOS
     sources:
@@ -23,15 +24,15 @@ targets:
       - Resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.tortoisegitmac.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.statoisegit.app
         INFOPLIST_FILE: Sources/App/Info.plist
-        CODE_SIGN_ENTITLEMENTS: Sources/App/TortoiseGitMac.entitlements
-        PRODUCT_NAME: TortoiseGitMac
+        CODE_SIGN_ENTITLEMENTS: Sources/App/StatoiseGit.entitlements
+        PRODUCT_NAME: "Statoise Git"
         COMBINE_HIDPI_IMAGES: YES
     dependencies:
-      - target: TortoiseGitFinderExtension
+      - target: StatoiseGitFinderExtension
 
-  TortoiseGitFinderExtension:
+  StatoiseGitFinderExtension:
     type: app-extension
     platform: macOS
     sources:
@@ -46,9 +47,9 @@ targets:
       - sdk: UserNotifications.framework
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.tortoisegitmac.app.FinderExtension
+        PRODUCT_BUNDLE_IDENTIFIER: com.statoisegit.app.FinderExtension
         INFOPLIST_FILE: FinderExtension/Info.plist
-        CODE_SIGN_ENTITLEMENTS: FinderExtension/TortoiseGitFinderExtension.entitlements
-        PRODUCT_NAME: TortoiseGitFinderExtension
+        CODE_SIGN_ENTITLEMENTS: FinderExtension/StatoiseGitFinderExtension.entitlements
+        PRODUCT_NAME: StatoiseGitFinderExtension
         SKIP_INSTALL: YES
     postCompileScripts: []

@@ -13,7 +13,7 @@ class PreferencesWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "TortoiseGitMac Preferences"
+        window.title = "Statoise Git Preferences"
         window.center()
         window.isReleasedWhenClosed = false
         
@@ -59,15 +59,21 @@ class PreferencesWindowController: NSWindowController {
         let scrollView = NSScrollView(frame: NSRect(x: 10, y: 50, width: 560, height: 280))
         scrollView.autoresizingMask = [.width, .height]
         scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = true
         
         repositoryListView = NSTableView()
         repositoryListView.delegate = self
         repositoryListView.dataSource = self
         
-        let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("path"))
-        column.title = "Repository Path"
-        column.width = 540
-        repositoryListView.addTableColumn(column)
+        let nameColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name"))
+        nameColumn.title = "Repository"
+        nameColumn.width = 180
+        repositoryListView.addTableColumn(nameColumn)
+
+        let pathColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("path"))
+        pathColumn.title = "Parent Path"
+        pathColumn.width = 360
+        repositoryListView.addTableColumn(pathColumn)
         repositoryListView.headerView = NSTableHeaderView()
         
         scrollView.documentView = repositoryListView
@@ -134,9 +140,17 @@ class PreferencesWindowController: NSWindowController {
         panel.prompt = "Add Repository"
         
         panel.begin { [weak self] response in
-            guard response == .OK, let url = panel.url else { return }
+            guard response == .OK else { return }
+            guard let selectedURL = panel.urls.first ?? panel.url else { return }
+            let resolvedPath = selectedURL.resolvingSymlinksInPath().standardizedFileURL.path
+            let runner = GitCommandRunner.shared
+
+            guard runner.isGitRepositoryRootByFilesystem(at: resolvedPath) else {
+                self?.showRepositorySelectionError(for: resolvedPath)
+                return
+            }
             
-            let repo = MonitoredRepository(path: url.path)
+            let repo = RepositoryPreferences.shared.makeMonitoredRepository(from: selectedURL)
             RepositoryPreferences.shared.addRepository(repo)
             self?.loadRepositories()
         }
@@ -177,6 +191,22 @@ class PreferencesWindowController: NSWindowController {
         repositories = RepositoryPreferences.shared.repositories
         repositoryListView?.reloadData()
     }
+
+    private func repositoryName(for path: String) -> String {
+        URL(fileURLWithPath: path).lastPathComponent
+    }
+
+    private func repositoryParentPath(for path: String) -> String {
+        URL(fileURLWithPath: path).deletingLastPathComponent().path
+    }
+
+    private func showRepositorySelectionError(for path: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Select a Git Repository Root"
+        alert.informativeText = "\(path) is not a Git repository root. Select the folder that directly contains .git."
+        alert.runModal()
+    }
 }
 
 // MARK: - NSTableViewDataSource & Delegate
@@ -188,7 +218,8 @@ extension PreferencesWindowController: NSTableViewDataSource, NSTableViewDelegat
     }
     
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-        let cellIdentifier = NSUserInterfaceItemIdentifier("PathCell")
+        guard let tableColumn else { return nil }
+        let cellIdentifier = tableColumn.identifier
         
         let cell: NSTextField
         if let existingCell = tableView.makeView(withIdentifier: cellIdentifier, owner: nil) as? NSTextField {
@@ -199,9 +230,20 @@ extension PreferencesWindowController: NSTableViewDataSource, NSTableViewDelegat
             cell.isBordered = false
             cell.isEditable = false
             cell.drawsBackground = false
+            cell.lineBreakMode = .byTruncatingHead
+            cell.maximumNumberOfLines = 1
+            cell.usesSingleLineMode = true
         }
         
-        cell.stringValue = repositories[row].path
+        switch tableColumn.identifier.rawValue {
+        case "name":
+            cell.stringValue = repositoryName(for: repositories[row].path)
+        case "path":
+            cell.stringValue = repositoryParentPath(for: repositories[row].path)
+        default:
+            cell.stringValue = repositories[row].path
+        }
+        cell.toolTip = repositories[row].path
         return cell
     }
 }

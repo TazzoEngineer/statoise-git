@@ -15,7 +15,7 @@ build/
 .LSOverride
 
 # Reference source (not part of this project)
-tortoisegit-ref/
+statoisegit-ref/
 
 # Local build output
 build/

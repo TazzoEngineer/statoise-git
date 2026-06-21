@@ -1,7 +1,7 @@
 import Foundation
 import os.log
 
-private let gitLogger = Logger(subsystem: "com.tortoisegitmac.app", category: "GitCommandRunner")
+private let gitLogger = Logger(subsystem: "com.statoisegit.app", category: "GitCommandRunner")
 
 /// Parsed commit entry for the log view
 struct LogEntry {
@@ -58,40 +58,36 @@ actor GitCommandRunner {
     private var gitPath: String {
         RepositoryPreferences.shared.gitPath
     }
-    
-    // MARK: - Core Execution
-    
-    private func runGit(arguments: [String], workingDirectory: String? = nil) async throws -> String {
+
+    private func runGitProcess(arguments: [String], workingDirectoryURL: URL? = nil) async throws -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: gitPath)
         process.arguments = arguments
-        
-        if let dir = workingDirectory {
-            process.currentDirectoryURL = URL(fileURLWithPath: dir)
+
+        if let workingDirectoryURL {
+            process.currentDirectoryURL = workingDirectoryURL
         }
-        
+
         let outputPipe = Pipe()
         let errorPipe = Pipe()
         process.standardOutput = outputPipe
         process.standardError = errorPipe
-        
+
         do {
             try process.run()
         } catch {
             gitLogger.error("Process.run() failed for git \(arguments.joined(separator: " "), privacy: .public): \(error.localizedDescription, privacy: .public)")
             throw error
         }
-        
-        // Read data BEFORE waiting for exit to avoid deadlock
-        // (pipe buffer can fill up with large output, blocking the process)
+
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-        
+
         process.waitUntilExit()
-        
+
         let output = String(data: outputData, encoding: .utf8) ?? ""
         let errorOutput = String(data: errorData, encoding: .utf8) ?? ""
-        
+
         if process.terminationStatus != 0 {
             gitLogger.error("git \(arguments.joined(separator: " "), privacy: .public) failed (exit \(process.terminationStatus)): \(errorOutput, privacy: .public)")
             throw GitError.commandFailed(
@@ -100,8 +96,20 @@ actor GitCommandRunner {
                 stderr: errorOutput
             )
         }
-        
+
         return output
+    }
+    
+    // MARK: - Core Execution
+    
+    private func runGit(arguments: [String], workingDirectory: String? = nil) async throws -> String {
+        if let dir = workingDirectory {
+            return try await RepositoryPreferences.shared.withSecurityScopedAccess(to: dir) { scopedURL in
+                try await self.runGitProcess(arguments: arguments, workingDirectoryURL: scopedURL)
+            }
+        }
+
+        return try await runGitProcess(arguments: arguments)
     }
     
     // MARK: - Status
@@ -430,6 +438,12 @@ actor GitCommandRunner {
             current = (current as NSString).deletingLastPathComponent
         }
         return false
+    }
+
+    /// Check if a path itself is a Git repository root.
+    nonisolated func isGitRepositoryRootByFilesystem(at path: String) -> Bool {
+        let gitDir = (path as NSString).appendingPathComponent(".git")
+        return FileManager.default.fileExists(atPath: gitDir)
     }
     
     /// Find repository root by walking up the directory tree

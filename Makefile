@@ -1,12 +1,15 @@
 .PHONY: generate build run clean dmg
 
-PROJECT_DIR = TortoiseGitMac
-PROJECT = $(PROJECT_DIR)/TortoiseGitMac.xcodeproj
-SCHEME = TortoiseGitMac
+PROJECT_DIR = StatoiseGit
+PROJECT = $(PROJECT_DIR)/StatoiseGit.xcodeproj
+SCHEME = StatoiseGit
 CONFIGURATION ?= Debug
 BUILD_DIR = build
 DERIVED_DATA = $(BUILD_DIR)/DerivedData
-APP_NAME = TortoiseGitMac
+APP_NAME = Statoise Git
+INSTALL_APP_DIR = $(HOME)/Applications
+INSTALL_APP_PATH = $(INSTALL_APP_DIR)/$(APP_NAME).app
+LSREGISTER = /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
 
 # Generate Xcode project from project.yml
 generate:
@@ -27,7 +30,11 @@ release: build
 
 # Run the app
 run: build
-	open $(DERIVED_DATA)/Build/Products/$(CONFIGURATION)/$(APP_NAME).app
+	mkdir -p "$(INSTALL_APP_DIR)"
+	rm -rf "$(INSTALL_APP_PATH)"
+	cp -R "$(DERIVED_DATA)/Build/Products/$(CONFIGURATION)/$(APP_NAME).app" "$(INSTALL_APP_DIR)/"
+	"$(LSREGISTER)" -u "$(DERIVED_DATA)/Build/Products/$(CONFIGURATION)/$(APP_NAME).app" 2>/dev/null || true
+	open "$(INSTALL_APP_PATH)"
 
 # Create DMG for distribution
 dmg: release
@@ -39,7 +46,7 @@ archive: generate
 		-project $(PROJECT) \
 		-scheme $(SCHEME) \
 		-configuration Release \
-		-archivePath $(BUILD_DIR)/$(APP_NAME).xcarchive \
+		-archivePath "$(BUILD_DIR)/$(APP_NAME).xcarchive" \
 		archive
 
 # Clean build artifacts

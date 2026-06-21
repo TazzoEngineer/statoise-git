@@ -4,11 +4,11 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
-    - PROJECT_PATH: TortoiseGitMac/TortoiseGitMac.xcodeproj
-    - SCHEME: TortoiseGitMac
+    - PROJECT_PATH: StatoiseGit/StatoiseGit.xcodeproj
+    - SCHEME: StatoiseGit
     - EXPORT_METHOD: developer-id
     - TEAM_ID: $APPLE_TEAM_ID
-    - BUNDLE_ID: com.tortoisegitmac.app
+    - BUNDLE_ID: com.statoisegit.app
 
 meta:
   bitrise.io:
@@ -31,6 +31,10 @@ pipelines:
       - stage-build-debug: {}
 
   pipeline-release:
+    stages:
+      - stage-build-release: {}
+
+  pipeline-release-full:
     stages:
       - stage-build-release: {}
       - stage-notarize: {}
@@ -64,21 +68,29 @@ workflows:
       - script@1:
           title: Install xcodegen
           inputs:
-            - content: brew install xcodegen
+            - content: |
+                set -euo pipefail
+                export HOMEBREW_NO_AUTO_UPDATE=1
+                if ! command -v xcodegen >/dev/null 2>&1; then
+                  brew install xcodegen
+                fi
 
       - script@1:
-          title: Generate Xcode project
+          title: Generate and build (Debug, unsigned)
           inputs:
             - content: |
-                cd TortoiseGitMac
+                set -euo pipefail
+
+                cd StatoiseGit
                 xcodegen generate
 
-      - xcode-build-for-test@3:
-          inputs:
-            - project_path: $PROJECT_PATH
-            - scheme: $SCHEME
-            - configuration: Debug
-            - destination: platform=macOS
+                xcodebuild \
+                  -project StatoiseGit.xcodeproj \
+                  -scheme "$SCHEME" \
+                  -configuration Debug \
+                  -destination "generic/platform=macOS" \
+                  build \
+                  CODE_SIGNING_ALLOWED=NO
 
       - deploy-to-bitrise-io@2:
           inputs:
@@ -96,13 +108,18 @@ workflows:
       - script@1:
           title: Install xcodegen
           inputs:
-            - content: brew install xcodegen
+            - content: |
+                set -euo pipefail
+                export HOMEBREW_NO_AUTO_UPDATE=1
+                if ! command -v xcodegen >/dev/null 2>&1; then
+                  brew install xcodegen
+                fi
 
       - script@1:
           title: Generate Xcode project
           inputs:
             - content: |
-                cd TortoiseGitMac
+                cd StatoiseGit
                 xcodegen generate
 
       - certificate-and-profile-installer@1: {}
@@ -113,13 +130,19 @@ workflows:
             - content: |
                 set -euo pipefail
 
-                cd TortoiseGitMac
+                if [ -z "${TEAM_ID:-}" ]; then
+                  echo "Error: TEAM_ID is not set. Configure APPLE_TEAM_ID in Bitrise Secrets."
+                  exit 1
+                fi
+
+                cd StatoiseGit
 
                 xcodebuild \
-                  -project TortoiseGitMac.xcodeproj \
+                  -project StatoiseGit.xcodeproj \
                   -scheme "$SCHEME" \
                   -configuration Release \
-                  -archivePath "$BITRISE_DEPLOY_DIR/TortoiseGitMac.xcarchive" \
+                  -destination "generic/platform=macOS" \
+                  -archivePath "$BITRISE_DEPLOY_DIR/Statoise Git.xcarchive" \
                   archive \
                   CODE_SIGN_IDENTITY="Developer ID Application" \
                   DEVELOPMENT_TEAM="$TEAM_ID"
@@ -130,11 +153,11 @@ workflows:
             - content: |
                 set -euo pipefail
 
-                ARCHIVE_PATH="$BITRISE_DEPLOY_DIR/TortoiseGitMac.xcarchive"
-                APP_PATH="$BITRISE_DEPLOY_DIR/TortoiseGitMac.app"
+                ARCHIVE_PATH="$BITRISE_DEPLOY_DIR/Statoise Git.xcarchive"
+                APP_PATH="$BITRISE_DEPLOY_DIR/Statoise Git.app"
 
                 # Copy app from archive
-                cp -R "$ARCHIVE_PATH/Products/Applications/TortoiseGitMac.app" "$APP_PATH"
+                cp -R "$ARCHIVE_PATH/Products/Applications/Statoise Git.app" "$APP_PATH"
 
                 echo "Exported app to: $APP_PATH"
 
@@ -144,18 +167,18 @@ workflows:
             - content: |
                 set -euo pipefail
 
-                APP_PATH="$BITRISE_DEPLOY_DIR/TortoiseGitMac.app"
-                DMG_PATH="$BITRISE_DEPLOY_DIR/TortoiseGitMac.dmg"
+                APP_PATH="$BITRISE_DEPLOY_DIR/Statoise Git.app"
+                DMG_PATH="$BITRISE_DEPLOY_DIR/Statoise Git.dmg"
 
                 # Get version from Info.plist
                 VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
                   "$APP_PATH/Contents/Info.plist")
 
-                DMG_NAME="TortoiseGitMac-${VERSION}.dmg"
+                DMG_NAME="Statoise Git-${VERSION}.dmg"
                 DMG_PATH="$BITRISE_DEPLOY_DIR/$DMG_NAME"
 
                 # Create DMG
-                hdiutil create -volname "TortoiseGitMac" \
+                hdiutil create -volname "Statoise Git" \
                   -srcfolder "$APP_PATH" \
                   -ov -format UDZO \
                   "$DMG_PATH"
@@ -242,7 +265,7 @@ workflows:
 
                 # Option 3: Create GitHub Release (requires gh CLI)
                 # gh release create "v${APP_VERSION}" "$DMG_PATH" \
-                #   --title "TortoiseGitMac v${APP_VERSION}" \
+                #   --title "Statoise Git v${APP_VERSION}" \
                 #   --notes "Release v${APP_VERSION}"
 
                 echo "Distribution step complete. Configure upload target in bitrise.yml."

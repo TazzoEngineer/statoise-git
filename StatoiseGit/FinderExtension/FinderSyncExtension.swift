@@ -3,9 +3,11 @@ import FinderSync
 import UserNotifications
 import os.log
 
-private let logger = Logger(subsystem: "com.tortoisegitmac.app.FinderExtension", category: "FinderSync")
+private let logger = Logger(subsystem: "com.statoisegit.app.FinderExtension", category: "FinderSync")
 
 class FinderSyncExtension: FIFinderSync {
+
+    private static let bootstrapDirectoryURL = URL(fileURLWithPath: "/Users/Shared")
     
     private var statusCache: [String: GitFileStatus] = [:]
     private var monitoredDirectories: Set<URL> = []
@@ -14,15 +16,15 @@ class FinderSyncExtension: FIFinderSync {
     // MARK: - Toolbar Item
     
     override var toolbarItemName: String {
-        return "TortoiseGit"
+        return "Statoise Git"
     }
     
     override var toolbarItemToolTip: String {
-        return "TortoiseGitMac Git Operations"
+        return "Statoise Git Operations"
     }
     
     override var toolbarItemImage: NSImage {
-        return NSImage(systemSymbolName: "tortoise.fill", accessibilityDescription: "TortoiseGit")
+        return NSImage(systemSymbolName: "tortoise.fill", accessibilityDescription: "Statoise Git")
             ?? NSImage(named: NSImage.networkName)!
     }
     
@@ -30,12 +32,10 @@ class FinderSyncExtension: FIFinderSync {
         super.init()
         
         logger.notice("FinderSyncExtension init() started")
-        
-        // Set monitored directories immediately (before badge registration)
-        // This ensures Finder knows our extension is active
-        let homeURL = URL(fileURLWithPath: NSHomeDirectory())
-        FIFinderSyncController.default().directoryURLs = [homeURL]
-        logger.notice("Set initial directoryURLs to home: \(homeURL.path)")
+
+        // Finder may not launch the extension unless at least one directory is monitored.
+        // Use a benign system-wide directory to bootstrap startup without triggering Documents prompts.
+        FIFinderSyncController.default().directoryURLs = [Self.bootstrapDirectoryURL]
         
         // Register badge icons for Finder overlays
         registerBadgeIcons()
@@ -113,15 +113,25 @@ class FinderSyncExtension: FIFinderSync {
     // MARK: - Monitored Directories
     
     private func reloadMonitoredDirectories() {
-        let repos = RepositoryPreferences.shared.enabledRepositoryPaths
-        let newDirs = Set(repos.compactMap { URL(fileURLWithPath: $0) })
-        
+        let prefs = RepositoryPreferences.shared
+        let publishedRoots = prefs.readMonitoredRepoRoots()
+        let fallbackRoots = prefs.fallbackEnabledRepositoryPathsForExtension()
+        let roots = publishedRoots.isEmpty ? fallbackRoots : publishedRoots
         let effectiveDirs: Set<URL>
-        if newDirs.isEmpty {
-            // Default to home directory so the extension stays active
-            effectiveDirs = [URL(fileURLWithPath: NSHomeDirectory())]
+        if roots.isEmpty {
+            effectiveDirs = [Self.bootstrapDirectoryURL]
         } else {
-            effectiveDirs = newDirs
+            var dirs = Set<URL>()
+            for root in roots {
+                let rootURL = URL(fileURLWithPath: root).resolvingSymlinksInPath().standardizedFileURL
+                dirs.insert(rootURL)
+
+                let parentPath = (rootURL.path as NSString).deletingLastPathComponent
+                if !parentPath.isEmpty && parentPath != "/" {
+                    dirs.insert(URL(fileURLWithPath: parentPath).standardizedFileURL)
+                }
+            }
+            effectiveDirs = dirs
         }
         
         // Only update if changed
@@ -324,7 +334,7 @@ class FinderSyncExtension: FIFinderSync {
     
     override func menu(for menuKind: FIMenuKind) -> NSMenu {
         logger.notice("menu(for:) called, menuKind=\(String(describing: menuKind))")
-        let menu = NSMenu(title: "TortoiseGitMac")
+        let menu = NSMenu(title: "Statoise Git")
         
         guard let target = FIFinderSyncController.default().targetedURL() else {
             return menu
@@ -391,7 +401,7 @@ class FinderSyncExtension: FIFinderSync {
     
     private func openMainApp(action: String, path: String, extraParams: String = "") {
         let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        let urlString = "tortoisegitmac://\(action)?path=\(encodedPath)\(extraParams)"
+        let urlString = "statoisegit://\(action)?path=\(encodedPath)\(extraParams)"
         if let url = URL(string: urlString) {
             NSWorkspace.shared.open(url)
         }
@@ -468,6 +478,6 @@ class FinderSyncExtension: FIFinderSync {
     }
     
     private func showError(_ error: Error) {
-        showNotification(title: "TortoiseGitMac Error", message: error.localizedDescription)
+        showNotification(title: "Statoise Git Error", message: error.localizedDescription)
     }
 }

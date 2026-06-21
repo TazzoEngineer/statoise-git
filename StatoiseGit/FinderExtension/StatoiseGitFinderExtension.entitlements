@@ -4,13 +4,11 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
-	<key>com.apple.security.application-groups</key>
-	<array>
-		<string>7H8HPZ8M25.com.tortoisegitmac</string>
-	</array>
 	<key>com.apple.security.files.user-selected.read-only</key>
 	<true/>
-	<key>com.apple.security.files.bookmarks.app-scope</key>
-	<true/>
+	<key>com.apple.security.temporary-exception.files.absolute-path.read-only</key>
+	<array>
+		<string>/Users/Shared/StatoiseGitShared/</string>
+	</array>
 </dict>
 </plist>

@@ -1,0 +1,596 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0B636F57ABC9DE5AA0F6A16F /* ReadOnlyIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 2C2FADF8506817EC479694F0 /* ReadOnlyIcon.png */; };
+		0F1DD979CAEDAEA39EC53795 /* AddedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 5B88068AB40BB0E07101F01F /* AddedIcon.png */; };
+		11165C10F50BC44AB2B8F4A2 /* AddedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AD3CAD2BE9784A3985B43C73 /* AddedIcon@2x.png */; };
+		152A9515FED654B49A7144A0 /* UnversionedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 05E05A38D916E9042F4DC6DC /* UnversionedIcon.png */; };
+		157E18EFC671331A3637A423 /* IgnoredIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACA3B58C4282DD0763E0D3E0 /* IgnoredIcon@2x.png */; };
+		1582312FC85200AE1A8B32FA /* ExternalDiffLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 743BB1BA12E5B36A01ECE8E3 /* ExternalDiffLauncher.swift */; };
+		16F33D5F08A46A1575EE8DA6 /* RepositoryPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1E8EAA7C4DF484A406360B /* RepositoryPreferences.swift */; };
+		29882EC244C501E336802074 /* ModifiedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = E3C3CEC2BA377BCD65C71F98 /* ModifiedIcon.png */; };
+		2BA543BE336A25E5EC753804 /* DeletedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 2873FBD18873FA22C00422C7 /* DeletedIcon.png */; };
+		403F758DCE42CE3CCDD4388E /* DiffWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E676FDF3F85259E84853C4EE /* DiffWindowController.swift */; };
+		63C8C91E73FF47D4FB15CB76 /* ModifiedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0BA087F90A91330CB4A2D5A2 /* ModifiedIcon@2x.png */; };
+		6B2143A00E94340B230CBB0F /* ConflictIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FA340617697C1B5283BFBC8 /* ConflictIcon@2x.png */; };
+		74B78C2CC2AC823A01418FFF /* PreferencesWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6233D2B2CA52CE3D7C98B975 /* PreferencesWindowController.swift */; };
+		7DA67EAD03E9AF4B6E3D5173 /* GitStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0F5DF8A2EDE7F05BD31FDB /* GitStatusService.swift */; };
+		823BE0474AA246168FD171C0 /* StatoiseGitFinderExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CB63294A20742608685B491B /* StatoiseGitFinderExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		94E681C13199FF249B0A1FFB /* DeletedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 607625B67D504A9707CCFCCE /* DeletedIcon@2x.png */; };
+		9947EF51C2C54DE4EFE92469 /* LockedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 122F966201BDDCB3F7BCA674 /* LockedIcon@2x.png */; };
+		9B750BEF817A960085E59271 /* GitCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */; };
+		9EE7B88F19BDF9FD77856EFB /* GitCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */; };
+		B06BFD699B00CC577ACA1C55 /* GitGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D28A0757643F5E98A0F548 /* GitGraphView.swift */; };
+		B976384D78F68A5FF7E937AA /* LockedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 2410980BCC796C39BF079CEF /* LockedIcon.png */; };
+		CB908E500B92095B37393447 /* UnversionedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = B71A188705E458EFEBF669DB /* UnversionedIcon@2x.png */; };
+		D557D85E3A4229852F4AD996 /* CommitWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6897F64E4E20A65FDCAE0B /* CommitWindowController.swift */; };
+		D7EB5A1BD7DDB2C48B377B2E /* ConflictIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6202F5CAA92EAF670926EEF /* ConflictIcon.png */; };
+		DBAC6FF4EAA7FAEDBE7E013A /* FinderSync.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9811996E572CE1561785A645 /* FinderSync.framework */; };
+		DED4D0F4663C3BA7E6784E3E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34A02571BA381C50EE4B41D8 /* main.swift */; };
+		E16C9F6EC3A18684F360E27D /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3232403EF1445F7F6E877B48 /* MainMenu.swift */; };
+		E4D8FE9D730D7730EFB52801 /* NormalIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = BC713CCFCEE5E40B1437166C /* NormalIcon.png */; };
+		EF70BFE1E2CBA3C7102B0C85 /* FinderSyncExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F26A32B8DF211E5ADB1692A2 /* FinderSyncExtension.swift */; };
+		EFF8DA16150DEDA949F99966 /* RepositoryPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1E8EAA7C4DF484A406360B /* RepositoryPreferences.swift */; };
+		F499AB2B803B1EA20902F1D2 /* ReadOnlyIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C5AA49F4E46426E9F8CB7B36 /* ReadOnlyIcon@2x.png */; };
+		F937EC101D967A5B3B2F5623 /* IgnoredIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = BCBD3B2A286F9E2EA21EEFB8 /* IgnoredIcon.png */; };
+		FA7226AFF36465FADDD22A65 /* NormalIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = CBECD02E88805A718E2E4906 /* NormalIcon@2x.png */; };
+		FAB586019A424711431B6085 /* LogWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B53B56C9EF027F386B3DB9 /* LogWindowController.swift */; };
+		FEB1DE3A8E9A069FB3EB8268 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5284C16FF81287DA9D8C42 /* AppDelegate.swift */; };
+		FFB19D97781AE16A167894D7 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B36D9EA9B46E8DED0B1D92F9 /* UserNotifications.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		1D615EE9A5D2F09F38F7907A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8723700EA12D6594A983C7DA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D5A75ABEEC02E41C46BB330A;
+			remoteInfo = StatoiseGitFinderExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		87430FDE5B83369E9D4DAA8D /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				823BE0474AA246168FD171C0 /* StatoiseGitFinderExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		05E05A38D916E9042F4DC6DC /* UnversionedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = UnversionedIcon.png; sourceTree = "<group>"; };
+		0BA087F90A91330CB4A2D5A2 /* ModifiedIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ModifiedIcon@2x.png"; sourceTree = "<group>"; };
+		122F966201BDDCB3F7BCA674 /* LockedIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "LockedIcon@2x.png"; sourceTree = "<group>"; };
+		1A6897F64E4E20A65FDCAE0B /* CommitWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitWindowController.swift; sourceTree = "<group>"; };
+		2410980BCC796C39BF079CEF /* LockedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = LockedIcon.png; sourceTree = "<group>"; };
+		2873FBD18873FA22C00422C7 /* DeletedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = DeletedIcon.png; sourceTree = "<group>"; };
+		2C2FADF8506817EC479694F0 /* ReadOnlyIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ReadOnlyIcon.png; sourceTree = "<group>"; };
+		3232403EF1445F7F6E877B48 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
+		34A02571BA381C50EE4B41D8 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitCommandRunner.swift; sourceTree = "<group>"; };
+		5B88068AB40BB0E07101F01F /* AddedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AddedIcon.png; sourceTree = "<group>"; };
+		607625B67D504A9707CCFCCE /* DeletedIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "DeletedIcon@2x.png"; sourceTree = "<group>"; };
+		6233D2B2CA52CE3D7C98B975 /* PreferencesWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesWindowController.swift; sourceTree = "<group>"; };
+		6FA340617697C1B5283BFBC8 /* ConflictIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ConflictIcon@2x.png"; sourceTree = "<group>"; };
+		743BB1BA12E5B36A01ECE8E3 /* ExternalDiffLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalDiffLauncher.swift; sourceTree = "<group>"; };
+		8A0F5DF8A2EDE7F05BD31FDB /* GitStatusService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitStatusService.swift; sourceTree = "<group>"; };
+		9811996E572CE1561785A645 /* FinderSync.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FinderSync.framework; path = System/Library/Frameworks/FinderSync.framework; sourceTree = SDKROOT; };
+		A6202F5CAA92EAF670926EEF /* ConflictIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ConflictIcon.png; sourceTree = "<group>"; };
+		A7D28A0757643F5E98A0F548 /* GitGraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitGraphView.swift; sourceTree = "<group>"; };
+		AB1E8EAA7C4DF484A406360B /* RepositoryPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryPreferences.swift; sourceTree = "<group>"; };
+		ACA3B58C4282DD0763E0D3E0 /* IgnoredIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "IgnoredIcon@2x.png"; sourceTree = "<group>"; };
+		AD3CAD2BE9784A3985B43C73 /* AddedIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AddedIcon@2x.png"; sourceTree = "<group>"; };
+		B36D9EA9B46E8DED0B1D92F9 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
+		B71A188705E458EFEBF669DB /* UnversionedIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "UnversionedIcon@2x.png"; sourceTree = "<group>"; };
+		BB5284C16FF81287DA9D8C42 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		BC713CCFCEE5E40B1437166C /* NormalIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = NormalIcon.png; sourceTree = "<group>"; };
+		BCBD3B2A286F9E2EA21EEFB8 /* IgnoredIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = IgnoredIcon.png; sourceTree = "<group>"; };
+		C5AA49F4E46426E9F8CB7B36 /* ReadOnlyIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ReadOnlyIcon@2x.png"; sourceTree = "<group>"; };
+		CB63294A20742608685B491B /* StatoiseGitFinderExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StatoiseGitFinderExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CBECD02E88805A718E2E4906 /* NormalIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "NormalIcon@2x.png"; sourceTree = "<group>"; };
+		CDED2500E2473D89F1123BDB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DFFACBC728453126B5EE5102 /* StatoiseGitFinderExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StatoiseGitFinderExtension.entitlements; sourceTree = "<group>"; };
+		E37DFFACC7A95E1B544C3B2B /* StatoiseGit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StatoiseGit.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E3C3CEC2BA377BCD65C71F98 /* ModifiedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ModifiedIcon.png; sourceTree = "<group>"; };
+		E676FDF3F85259E84853C4EE /* DiffWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffWindowController.swift; sourceTree = "<group>"; };
+		F26A32B8DF211E5ADB1692A2 /* FinderSyncExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderSyncExtension.swift; sourceTree = "<group>"; };
+		F29269A6A3B36EC689C8E2D8 /* StatoiseGit.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StatoiseGit.entitlements; sourceTree = "<group>"; };
+		F6B53B56C9EF027F386B3DB9 /* LogWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogWindowController.swift; sourceTree = "<group>"; };
+		FD216546798873A884CD7860 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CE54448B7DF3C32D2D3348D0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DBAC6FF4EAA7FAEDBE7E013A /* FinderSync.framework in Frameworks */,
+				FFB19D97781AE16A167894D7 /* UserNotifications.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0F69CF9BA0FF7E14A04FA032 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				BB5284C16FF81287DA9D8C42 /* AppDelegate.swift */,
+				1A6897F64E4E20A65FDCAE0B /* CommitWindowController.swift */,
+				E676FDF3F85259E84853C4EE /* DiffWindowController.swift */,
+				743BB1BA12E5B36A01ECE8E3 /* ExternalDiffLauncher.swift */,
+				A7D28A0757643F5E98A0F548 /* GitGraphView.swift */,
+				8A0F5DF8A2EDE7F05BD31FDB /* GitStatusService.swift */,
+				FD216546798873A884CD7860 /* Info.plist */,
+				F6B53B56C9EF027F386B3DB9 /* LogWindowController.swift */,
+				34A02571BA381C50EE4B41D8 /* main.swift */,
+				3232403EF1445F7F6E877B48 /* MainMenu.swift */,
+				6233D2B2CA52CE3D7C98B975 /* PreferencesWindowController.swift */,
+				F29269A6A3B36EC689C8E2D8 /* StatoiseGit.entitlements */,
+			);
+			name = App;
+			path = Sources/App;
+			sourceTree = "<group>";
+		};
+		24F94A828BB27F83AAC2E051 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E37DFFACC7A95E1B544C3B2B /* StatoiseGit.app */,
+				CB63294A20742608685B491B /* StatoiseGitFinderExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3A6BBB6CDFBA64EE442EC416 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9811996E572CE1561785A645 /* FinderSync.framework */,
+				B36D9EA9B46E8DED0B1D92F9 /* UserNotifications.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		485A38FC95F06D2B2DD7007F /* FinderExtension */ = {
+			isa = PBXGroup;
+			children = (
+				F26A32B8DF211E5ADB1692A2 /* FinderSyncExtension.swift */,
+				CDED2500E2473D89F1123BDB /* Info.plist */,
+				DFFACBC728453126B5EE5102 /* StatoiseGitFinderExtension.entitlements */,
+				EC7191365973E320D17079E0 /* OverlayIcons */,
+			);
+			path = FinderExtension;
+			sourceTree = "<group>";
+		};
+		7A1A6F7A1CDBF78CB00D5A31 = {
+			isa = PBXGroup;
+			children = (
+				0F69CF9BA0FF7E14A04FA032 /* App */,
+				485A38FC95F06D2B2DD7007F /* FinderExtension */,
+				C2530C173775E173E3AFB2CA /* GitOperations */,
+				E83C3D18CE2249BE39D03CBB /* Shared */,
+				3A6BBB6CDFBA64EE442EC416 /* Frameworks */,
+				24F94A828BB27F83AAC2E051 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C2530C173775E173E3AFB2CA /* GitOperations */ = {
+			isa = PBXGroup;
+			children = (
+				373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */,
+			);
+			name = GitOperations;
+			path = Sources/GitOperations;
+			sourceTree = "<group>";
+		};
+		E83C3D18CE2249BE39D03CBB /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				AB1E8EAA7C4DF484A406360B /* RepositoryPreferences.swift */,
+			);
+			name = Shared;
+			path = Sources/Shared;
+			sourceTree = "<group>";
+		};
+		EC7191365973E320D17079E0 /* OverlayIcons */ = {
+			isa = PBXGroup;
+			children = (
+				5B88068AB40BB0E07101F01F /* AddedIcon.png */,
+				AD3CAD2BE9784A3985B43C73 /* AddedIcon@2x.png */,
+				A6202F5CAA92EAF670926EEF /* ConflictIcon.png */,
+				6FA340617697C1B5283BFBC8 /* ConflictIcon@2x.png */,
+				2873FBD18873FA22C00422C7 /* DeletedIcon.png */,
+				607625B67D504A9707CCFCCE /* DeletedIcon@2x.png */,
+				BCBD3B2A286F9E2EA21EEFB8 /* IgnoredIcon.png */,
+				ACA3B58C4282DD0763E0D3E0 /* IgnoredIcon@2x.png */,
+				2410980BCC796C39BF079CEF /* LockedIcon.png */,
+				122F966201BDDCB3F7BCA674 /* LockedIcon@2x.png */,
+				E3C3CEC2BA377BCD65C71F98 /* ModifiedIcon.png */,
+				0BA087F90A91330CB4A2D5A2 /* ModifiedIcon@2x.png */,
+				BC713CCFCEE5E40B1437166C /* NormalIcon.png */,
+				CBECD02E88805A718E2E4906 /* NormalIcon@2x.png */,
+				2C2FADF8506817EC479694F0 /* ReadOnlyIcon.png */,
+				C5AA49F4E46426E9F8CB7B36 /* ReadOnlyIcon@2x.png */,
+				05E05A38D916E9042F4DC6DC /* UnversionedIcon.png */,
+				B71A188705E458EFEBF669DB /* UnversionedIcon@2x.png */,
+			);
+			path = OverlayIcons;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C966957E3FAD6463B999364C /* StatoiseGit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 82FE94E9A384B65A251212C5 /* Build configuration list for PBXNativeTarget "StatoiseGit" */;
+			buildPhases = (
+				ED888880381A0075CEA33D17 /* Sources */,
+				87430FDE5B83369E9D4DAA8D /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E8F6CD132D97519A59A57264 /* PBXTargetDependency */,
+			);
+			name = StatoiseGit;
+			packageProductDependencies = (
+			);
+			productName = StatoiseGit;
+			productReference = E37DFFACC7A95E1B544C3B2B /* StatoiseGit.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D5A75ABEEC02E41C46BB330A /* StatoiseGitFinderExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 624EC5A7DF7C3E345FA472B9 /* Build configuration list for PBXNativeTarget "StatoiseGitFinderExtension" */;
+			buildPhases = (
+				578CB910D3C01B379C2F0339 /* Sources */,
+				060C38F85467839F5CC0E79D /* Resources */,
+				CE54448B7DF3C32D2D3348D0 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = StatoiseGitFinderExtension;
+			packageProductDependencies = (
+			);
+			productName = StatoiseGitFinderExtension;
+			productReference = CB63294A20742608685B491B /* StatoiseGitFinderExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8723700EA12D6594A983C7DA /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 1FCA80066F4B6AD48F190837 /* Build configuration list for PBXProject "StatoiseGit" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7A1A6F7A1CDBF78CB00D5A31;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 24F94A828BB27F83AAC2E051 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C966957E3FAD6463B999364C /* StatoiseGit */,
+				D5A75ABEEC02E41C46BB330A /* StatoiseGitFinderExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		060C38F85467839F5CC0E79D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0F1DD979CAEDAEA39EC53795 /* AddedIcon.png in Resources */,
+				11165C10F50BC44AB2B8F4A2 /* AddedIcon@2x.png in Resources */,
+				D7EB5A1BD7DDB2C48B377B2E /* ConflictIcon.png in Resources */,
+				6B2143A00E94340B230CBB0F /* ConflictIcon@2x.png in Resources */,
+				2BA543BE336A25E5EC753804 /* DeletedIcon.png in Resources */,
+				94E681C13199FF249B0A1FFB /* DeletedIcon@2x.png in Resources */,
+				F937EC101D967A5B3B2F5623 /* IgnoredIcon.png in Resources */,
+				157E18EFC671331A3637A423 /* IgnoredIcon@2x.png in Resources */,
+				B976384D78F68A5FF7E937AA /* LockedIcon.png in Resources */,
+				9947EF51C2C54DE4EFE92469 /* LockedIcon@2x.png in Resources */,
+				29882EC244C501E336802074 /* ModifiedIcon.png in Resources */,
+				63C8C91E73FF47D4FB15CB76 /* ModifiedIcon@2x.png in Resources */,
+				E4D8FE9D730D7730EFB52801 /* NormalIcon.png in Resources */,
+				FA7226AFF36465FADDD22A65 /* NormalIcon@2x.png in Resources */,
+				0B636F57ABC9DE5AA0F6A16F /* ReadOnlyIcon.png in Resources */,
+				F499AB2B803B1EA20902F1D2 /* ReadOnlyIcon@2x.png in Resources */,
+				152A9515FED654B49A7144A0 /* UnversionedIcon.png in Resources */,
+				CB908E500B92095B37393447 /* UnversionedIcon@2x.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		578CB910D3C01B379C2F0339 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EF70BFE1E2CBA3C7102B0C85 /* FinderSyncExtension.swift in Sources */,
+				9EE7B88F19BDF9FD77856EFB /* GitCommandRunner.swift in Sources */,
+				16F33D5F08A46A1575EE8DA6 /* RepositoryPreferences.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ED888880381A0075CEA33D17 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FEB1DE3A8E9A069FB3EB8268 /* AppDelegate.swift in Sources */,
+				D557D85E3A4229852F4AD996 /* CommitWindowController.swift in Sources */,
+				403F758DCE42CE3CCDD4388E /* DiffWindowController.swift in Sources */,
+				1582312FC85200AE1A8B32FA /* ExternalDiffLauncher.swift in Sources */,
+				9B750BEF817A960085E59271 /* GitCommandRunner.swift in Sources */,
+				B06BFD699B00CC577ACA1C55 /* GitGraphView.swift in Sources */,
+				7DA67EAD03E9AF4B6E3D5173 /* GitStatusService.swift in Sources */,
+				FAB586019A424711431B6085 /* LogWindowController.swift in Sources */,
+				E16C9F6EC3A18684F360E27D /* MainMenu.swift in Sources */,
+				74B78C2CC2AC823A01418FFF /* PreferencesWindowController.swift in Sources */,
+				EFF8DA16150DEDA949F99966 /* RepositoryPreferences.swift in Sources */,
+				DED4D0F4663C3BA7E6784E3E /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E8F6CD132D97519A59A57264 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D5A75ABEEC02E41C46BB330A /* StatoiseGitFinderExtension */;
+			targetProxy = 1D615EE9A5D2F09F38F7907A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0CE266D22C3E195830F53283 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FinderExtension/StatoiseGitFinderExtension.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = FinderExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.statoisegit.app.FinderExtension;
+				PRODUCT_NAME = StatoiseGitFinderExtension;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		0FF95FD5C9C23AFF8A98101E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/App/StatoiseGit.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Sources/App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.statoisegit.app;
+				PRODUCT_NAME = "Statoise Git";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		54A05B0F4E704D9742E85BFF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		C93860E070BB5871EBBFF8B5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/App/StatoiseGit.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Sources/App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.statoisegit.app;
+				PRODUCT_NAME = "Statoise Git";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		D5D53AEC72AC06C53F899FA7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		D9611F8018D1EED019F46562 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FinderExtension/StatoiseGitFinderExtension.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = FinderExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.statoisegit.app.FinderExtension;
+				PRODUCT_NAME = StatoiseGitFinderExtension;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1FCA80066F4B6AD48F190837 /* Build configuration list for PBXProject "StatoiseGit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D5D53AEC72AC06C53F899FA7 /* Debug */,
+				54A05B0F4E704D9742E85BFF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		624EC5A7DF7C3E345FA472B9 /* Build configuration list for PBXNativeTarget "StatoiseGitFinderExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0CE266D22C3E195830F53283 /* Debug */,
+				D9611F8018D1EED019F46562 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		82FE94E9A384B65A251212C5 /* Build configuration list for PBXNativeTarget "StatoiseGit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0FF95FD5C9C23AFF8A98101E /* Debug */,
+				C93860E070BB5871EBBFF8B5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 8723700EA12D6594A983C7DA /* Project object */;
+}
