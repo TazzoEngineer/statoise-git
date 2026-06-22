@@ -50,7 +50,7 @@ struct GitBranchInfo {
     let isCurrent: Bool
 }
 
-private struct GitTreeEntry {
+struct GitTreeEntry {
     let mode: String
     let type: String
     let object: String
@@ -416,7 +416,7 @@ actor GitCommandRunner {
         return (root as NSString).appendingPathComponent(file)
     }
 
-    private func treeEntry(at root: String, revision: String, file: String) async throws -> GitTreeEntry? {
+    func treeEntry(at root: String, revision: String, file: String) async throws -> GitTreeEntry? {
         let output = try await runGit(
             arguments: ["ls-tree", revision, "--", file],
             workingDirectory: root
@@ -589,6 +589,14 @@ actor GitCommandRunner {
     func repositoryRoot(at path: String) async throws -> String {
         let output = try await runGit(
             arguments: ["rev-parse", "--show-toplevel"],
+            workingDirectory: path
+        )
+        return output.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    func repositoryHead(at path: String) async throws -> String {
+        let output = try await runGit(
+            arguments: ["rev-parse", "HEAD"],
             workingDirectory: path
         )
         return output.trimmingCharacters(in: .whitespacesAndNewlines)

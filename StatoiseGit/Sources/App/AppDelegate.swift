@@ -166,22 +166,106 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func showDiffWindow(repositoryPath: String, file: String?) {
         let externalTool = RepositoryPreferences.shared.externalDiffTool
-        if !externalTool.isEmpty, let file = file, !file.isEmpty {
+
+        if let selectedPath = file, !selectedPath.isEmpty {
             Task {
                 do {
-                    let root = try await GitCommandRunner.shared.repositoryRoot(at: repositoryPath)
-                    let headContent = try await GitCommandRunner.shared.exportFileAtRevision(
-                        at: root, hash: "HEAD", file: file
-                    )
-                    let workingFile = try await GitCommandRunner.shared.exportWorkingTreeItemForDiff(
-                        at: root, file: file
-                    )
-                    await MainActor.run {
-                        ExternalDiffLauncher.launch(tool: externalTool, oldFile: headContent, newFile: workingFile)
+                    let runner = GitCommandRunner.shared
+                    let superRoot = try await runner.repositoryRoot(at: repositoryPath)
+                    let normalizedSelectedPath = URL(fileURLWithPath: selectedPath).resolvingSymlinksInPath().standardizedFileURL.path
+
+                    // Selected submodule directory itself: show SHA diff summary in built-in viewer.
+                    if runner.isGitRepositoryRootByFilesystem(at: normalizedSelectedPath),
+                       let superRelative = relativePath(from: superRoot, to: normalizedSelectedPath),
+                       !superRelative.isEmpty {
+                        // Get recorded SHA in parent index
+                        let indexSHA: String
+                        if let entry = try? await runner.treeEntry(at: superRoot, revision: "HEAD", file: superRelative) {
+                            indexSHA = entry.object
+                        } else {
+                            indexSHA = "(unknown)"
+                        }
+                        // Get actual HEAD of submodule
+                        let submoduleHead = (try? await runner.repositoryHead(at: normalizedSelectedPath)) ?? "(unknown)"
+                        // Get diff log
+                        let diffLog = (try? await runner.diff(at: superRoot, file: superRelative)) ?? ""
+
+                        let summary = """
+                        Submodule: \(superRelative)
+                        Parent expects: \(indexSHA)
+                        Submodule HEAD: \(submoduleHead)
+                        \(indexSHA == submoduleHead ? "(commits match)" : "(commits differ)")
+
+                        \(diffLog.isEmpty ? "(No staged/unstaged commit pointer change)" : diffLog)
+                        """
+
+                        await MainActor.run {
+                            let controller = DiffWindowController(
+                                repositoryPath: superRoot,
+                                diffContent: summary,
+                                title: superRelative
+                            )
+                            self.diffWindowControllers.append(controller)
+                            controller.showWindow(self)
+                        }
+                        return
+                    }
+
+                    // Path inside a nested repository (submodule): use nested repo root and file-relative path.
+                    var isDir: ObjCBool = false
+                    let selectedDir: String
+                    if FileManager.default.fileExists(atPath: normalizedSelectedPath, isDirectory: &isDir), isDir.boolValue {
+                        selectedDir = normalizedSelectedPath
+                    } else {
+                        selectedDir = (normalizedSelectedPath as NSString).deletingLastPathComponent
+                    }
+                    let selectedRepoRoot = try await runner.repositoryRoot(at: selectedDir)
+                    if selectedRepoRoot != superRoot,
+                       let nestedRelative = relativePath(from: selectedRepoRoot, to: normalizedSelectedPath),
+                       !nestedRelative.isEmpty {
+                        if !externalTool.isEmpty {
+                            let headContent = try await runner.exportFileAtRevision(
+                                at: selectedRepoRoot, hash: "HEAD", file: nestedRelative
+                            )
+                            let workingFile = try await runner.exportWorkingTreeItemForDiff(
+                                at: selectedRepoRoot, file: nestedRelative
+                            )
+                            await MainActor.run {
+                                ExternalDiffLauncher.launch(tool: externalTool, oldFile: headContent, newFile: workingFile)
+                            }
+                        } else {
+                            await MainActor.run {
+                                let controller = DiffWindowController(repositoryPath: selectedRepoRoot, file: nestedRelative)
+                                self.diffWindowControllers.append(controller)
+                                controller.showWindow(self)
+                            }
+                        }
+                        return
+                    }
+
+                    // Normal superproject path: resolve absolute path to superproject-relative path.
+                    let superRelativePath = relativePath(from: superRoot, to: normalizedSelectedPath) ?? selectedPath
+
+                    if !externalTool.isEmpty {
+                        let headContent = try await runner.exportFileAtRevision(
+                            at: superRoot, hash: "HEAD", file: superRelativePath
+                        )
+                        let workingFile = try await runner.exportWorkingTreeItemForDiff(
+                            at: superRoot, file: superRelativePath
+                        )
+                        await MainActor.run {
+                            ExternalDiffLauncher.launch(tool: externalTool, oldFile: headContent, newFile: workingFile)
+                        }
+                    } else {
+                        await MainActor.run {
+                            let controller = DiffWindowController(repositoryPath: superRoot, file: superRelativePath)
+                            self.diffWindowControllers.append(controller)
+                            controller.showWindow(self)
+                        }
                     }
                 } catch {
                     await MainActor.run {
-                        let controller = DiffWindowController(repositoryPath: repositoryPath, file: file)
+                        let controller = DiffWindowController(repositoryPath: repositoryPath, file: selectedPath)
                         self.diffWindowControllers.append(controller)
                         controller.showWindow(self)
                     }
@@ -192,5 +276,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             diffWindowControllers.append(controller)
             controller.showWindow(self)
         }
+    }
+
+    private func relativePath(from root: String, to path: String) -> String? {
+        let normalizedRoot = URL(fileURLWithPath: root).resolvingSymlinksInPath().standardizedFileURL.path
+        let normalizedPath = URL(fileURLWithPath: path).resolvingSymlinksInPath().standardizedFileURL.path
+
+        if normalizedPath == normalizedRoot {
+            return ""
+        }
+
+        let prefix = normalizedRoot.hasSuffix("/") ? normalizedRoot : normalizedRoot + "/"
+        guard normalizedPath.hasPrefix(prefix) else {
+            return nil
+        }
+
+        return String(normalizedPath.dropFirst(prefix.count))
     }
 }

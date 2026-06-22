@@ -430,7 +430,10 @@ class FinderSyncExtension: FIFinderSync {
     @objc func gitDiff(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
         let selectedItems = FIFinderSyncController.default().selectedItemURLs() ?? []
-        let filePath = selectedItems.first?.path ?? ""
+        // In some Finder contexts selectedItemURLs can be empty even when invoking
+        // the context menu on a concrete item. Fall back to targetedURL so App can
+        // resolve the correct diff target path.
+        let filePath = selectedItems.first?.path ?? target.path
         let encodedFile = filePath.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         openMainApp(action: "diff", path: target.path, extraParams: "&file=\(encodedFile)")
     }
