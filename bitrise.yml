@@ -71,26 +71,8 @@ workflows:
                 APP_PATH="../build/DerivedData/Build/Products/Debug/Statoise Git.app"
                 if [ -d "$APP_PATH" ]; then
                   ditto "$APP_PATH" "$BITRISE_DEPLOY_DIR/Statoise Git.app"
+                  cp scripts/install.sh "$BITRISE_DEPLOY_DIR/install.sh"
                   cd "$BITRISE_DEPLOY_DIR"
-
-                  # Create install script
-                  cat > install.sh << 'EOF'
-#!/bin/bash
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-APP_PATH="$SCRIPT_DIR/Statoise Git.app"
-if [ ! -d "$APP_PATH" ]; then
-  echo "Error: 'Statoise Git.app' not found in the same directory as this script."
-  exit 1
-fi
-xattr -cr "$APP_PATH"
-mkdir -p ~/Applications
-rm -rf ~/Applications/"Statoise Git.app"
-cp -R "$APP_PATH" ~/Applications/
-open ~/Applications/"Statoise Git.app"
-echo "Installed successfully."
-EOF
-                  chmod +x install.sh
-
                   zip -r -y "StatoiseGit-Debug.zip" "Statoise Git.app" install.sh
                   rm -rf "Statoise Git.app" install.sh
                 fi
