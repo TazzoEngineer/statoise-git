@@ -1,50 +1,29 @@
 ---
-format_version: "13"
+format_version: "26"
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
-
-app:
-  envs:
-    - PROJECT_PATH: StatoiseGit/StatoiseGit.xcodeproj
-    - SCHEME: StatoiseGit
-    - EXPORT_METHOD: developer-id
-    - TEAM_ID: $APPLE_TEAM_ID
-    - BUNDLE_ID: com.statoisegit.app
+project_type: macos
 
 meta:
   bitrise.io:
-    stack: osx-xcode-16.0.x
-    machine_type_id: g2-m1.8core
+    stack: osx-xcode-26.5.x
+    machine_type_id: g2.mac.medium
 
-trigger_map:
-  - push_branch: master
-    pipeline: pipeline-debug
-  - pull_request_source_branch: "*"
-    pipeline: pipeline-debug
-
-pipelines:
-  pipeline-debug:
-    stages:
-      - stage-build-debug: {}
-
-  pipeline-release:
-    stages:
-      - stage-build-release: {}
-
-stages:
-  stage-build-debug:
-    workflows:
-      - build-debug: {}
-
-  stage-build-release:
-    workflows:
-      - build-release: {}
+app:
+  envs:
+    - BITRISE_PROJECT_PATH: StatoiseGit/StatoiseGit.xcodeproj
+      opts:
+        is_expand: false
+    - BITRISE_SCHEME: StatoiseGit
+      opts:
+        is_expand: false
+    - BITRISE_EXPORT_METHOD: none
+      opts:
+        is_expand: false
 
 workflows:
-  # ----------------------------
-  # Debug build (master push, PRs)
-  # ----------------------------
-  build-debug:
+  primary:
     steps:
+      - activate-ssh-key@4: {}
       - git-clone@8: {}
 
       - script@1:
@@ -68,7 +47,7 @@ workflows:
                 echo "Generated project successfully"
 
       - script@1:
-          title: Build (Debug, ad-hoc signing)
+          title: Build (Debug)
           inputs:
             - content: |
                 set -euo pipefail
@@ -77,7 +56,7 @@ workflows:
 
                 xcodebuild \
                   -project StatoiseGit.xcodeproj \
-                  -scheme "$SCHEME" \
+                  -scheme "$BITRISE_SCHEME" \
                   -configuration Debug \
                   -destination "generic/platform=macOS" \
                   -derivedDataPath ../build/DerivedData \
@@ -88,80 +67,10 @@ workflows:
 
                 echo "Build succeeded"
 
-  # ----------------------------
-  # Release build (manual trigger)
-  # ----------------------------
-  build-release:
-    envs:
-      - CONFIGURATION: Release
-    steps:
-      - git-clone@8: {}
-
-      - script@1:
-          title: Install xcodegen
-          inputs:
-            - content: |
-                set -euo pipefail
-                export HOMEBREW_NO_AUTO_UPDATE=1
-                if ! command -v xcodegen >/dev/null 2>&1; then
-                  brew install xcodegen
-                fi
-
-      - script@1:
-          title: Generate Xcode project
-          inputs:
-            - content: |
-                set -euo pipefail
-                cd StatoiseGit
-                xcodegen generate
-
-      - certificate-and-profile-installer@1: {}
-
-      - script@1:
-          title: Build and Archive
-          inputs:
-            - content: |
-                set -euo pipefail
-
-                if [ -z "${TEAM_ID:-}" ]; then
-                  echo "Error: TEAM_ID is not set. Configure APPLE_TEAM_ID in Bitrise Secrets."
-                  exit 1
-                fi
-
-                cd StatoiseGit
-
-                xcodebuild \
-                  -project StatoiseGit.xcodeproj \
-                  -scheme "$SCHEME" \
-                  -configuration Release \
-                  -destination "generic/platform=macOS" \
-                  -archivePath "$BITRISE_DEPLOY_DIR/StatoiseGit.xcarchive" \
-                  archive \
-                  CODE_SIGN_IDENTITY="Developer ID Application" \
-                  DEVELOPMENT_TEAM="$TEAM_ID"
-
-      - script@1:
-          title: Create DMG
-          inputs:
-            - content: |
-                set -euo pipefail
-
-                ARCHIVE_PATH="$BITRISE_DEPLOY_DIR/StatoiseGit.xcarchive"
-                APP_PATH="$BITRISE_DEPLOY_DIR/Statoise Git.app"
-
-                cp -R "$ARCHIVE_PATH/Products/Applications/Statoise Git.app" "$APP_PATH"
-
-                VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
-                  "$APP_PATH/Contents/Info.plist")
-
-                DMG_NAME="StatoiseGit-${VERSION}.dmg"
-                DMG_PATH="$BITRISE_DEPLOY_DIR/$DMG_NAME"
-
-                hdiutil create -volname "Statoise Git" \
-                  -srcfolder "$APP_PATH" \
-                  -ov -format UDZO \
-                  "$DMG_PATH"
-
-                echo "Created DMG: $DMG_PATH"
-
       - deploy-to-bitrise-io@2: {}
+
+    triggers:
+      push:
+        - branch: master
+      pull_request:
+        - source_branch: "*"
