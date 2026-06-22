@@ -514,19 +514,40 @@ actor GitCommandRunner {
     }
     
     func stashList(at path: String) async throws -> String {
-        return try await runGit(arguments: ["stash", "list"], workingDirectory: path)
+        let root = try await repositoryRoot(at: path)
+        return try await runGit(arguments: ["stash", "list"], workingDirectory: root)
     }
     
-    func stashSave(at path: String, message: String?) async throws {
+    func stashSave(at path: String, message: String?, includeUntracked: Bool = false) async throws {
+        let root = try await repositoryRoot(at: path)
         var args = ["stash", "push"]
-        if let message = message {
+        if includeUntracked {
+            args.append("--include-untracked")
+        }
+        if let message = message, !message.isEmpty {
             args += ["-m", message]
         }
-        _ = try await runGit(arguments: args, workingDirectory: path)
+        _ = try await runGit(arguments: args, workingDirectory: root)
     }
     
     func stashPop(at path: String) async throws {
-        _ = try await runGit(arguments: ["stash", "pop"], workingDirectory: path)
+        let root = try await repositoryRoot(at: path)
+        _ = try await runGit(arguments: ["stash", "pop"], workingDirectory: root)
+    }
+
+    func resetHard(at path: String) async throws {
+        let root = try await repositoryRoot(at: path)
+        _ = try await runGit(arguments: ["reset", "--hard", "HEAD"], workingDirectory: root)
+    }
+
+    func cleanAll(at path: String) async throws {
+        let root = try await repositoryRoot(at: path)
+        _ = try await runGit(arguments: ["clean", "-xdf"], workingDirectory: root)
+    }
+
+    func submoduleUpdate(at path: String) async throws {
+        let root = try await repositoryRoot(at: path)
+        _ = try await runGit(arguments: ["submodule", "update", "--init"], workingDirectory: root)
     }
     
     // MARK: - Repository Detection

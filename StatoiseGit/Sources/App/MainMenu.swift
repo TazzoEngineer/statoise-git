@@ -23,6 +23,18 @@ extension AppDelegate {
         let fileMenu = NSMenu(title: "File")
         fileMenu.addItem(withTitle: "Git Clone…", action: #selector(AppDelegate.gitClone(_:)), keyEquivalent: "n")
         fileMenuItem.submenu = fileMenu
+
+        // Git menu
+        let gitMenuItem = NSMenuItem()
+        mainMenu.addItem(gitMenuItem)
+        let gitMenu = NSMenu(title: "Git")
+        gitMenu.addItem(withTitle: "Stash Save (include untracked)…", action: #selector(AppDelegate.menuStashSave(_:)), keyEquivalent: "")
+        gitMenu.addItem(NSMenuItem.separator())
+        gitMenu.addItem(withTitle: "Submodule Update --init", action: #selector(AppDelegate.menuSubmoduleUpdate(_:)), keyEquivalent: "")
+        gitMenu.addItem(NSMenuItem.separator())
+        gitMenu.addItem(withTitle: "Reset --hard HEAD", action: #selector(AppDelegate.menuResetHard(_:)), keyEquivalent: "")
+        gitMenu.addItem(withTitle: "Clean -xdf", action: #selector(AppDelegate.menuCleanAll(_:)), keyEquivalent: "")
+        gitMenuItem.submenu = gitMenu
         
         // Window menu
         let windowMenuItem = NSMenuItem()

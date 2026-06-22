@@ -383,17 +383,30 @@ class FinderSyncExtension: FIFinderSync {
             addItem.image = NSImage(systemSymbolName: "plus.circle", accessibilityDescription: "Add")
             menu.addItem(addItem)
         }
-        
+
+        menu.addItem(NSMenuItem.separator())
+
         // Stash submenu
         let stashMenu = NSMenu(title: "Stash")
-        stashMenu.addItem(NSMenuItem(title: "Stash Save…", action: #selector(gitStashSave(_:)), keyEquivalent: ""))
+        stashMenu.addItem(NSMenuItem(title: "Stash Save (include untracked)…", action: #selector(gitStashSave(_:)), keyEquivalent: ""))
         stashMenu.addItem(NSMenuItem(title: "Stash Pop", action: #selector(gitStashPop(_:)), keyEquivalent: ""))
         stashMenu.addItem(NSMenuItem(title: "Stash List", action: #selector(gitStashList(_:)), keyEquivalent: ""))
         
         let stashItem = NSMenuItem(title: "Stash", action: nil, keyEquivalent: "")
         stashItem.submenu = stashMenu
         menu.addItem(stashItem)
-        
+        // Submodule Update
+        let submoduleItem = NSMenuItem(title: "Submodule Update --init", action: #selector(gitSubmoduleUpdate(_:)), keyEquivalent: "")
+        submoduleItem.image = NSImage(systemSymbolName: "arrow.triangle.branch", accessibilityDescription: "Submodule")
+        menu.addItem(submoduleItem)
+        // Dangerous operations
+        let resetItem = NSMenuItem(title: "Reset --hard HEAD", action: #selector(gitResetHard(_:)), keyEquivalent: "")
+        resetItem.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "Reset")
+        menu.addItem(resetItem)
+        let cleanItem = NSMenuItem(title: "Clean -xdf", action: #selector(gitCleanAll(_:)), keyEquivalent: "")
+        cleanItem.image = NSImage(systemSymbolName: "trash", accessibilityDescription: "Clean")
+        menu.addItem(cleanItem)
+
         return menu
     }
     
@@ -453,7 +466,22 @@ class FinderSyncExtension: FIFinderSync {
     
     @objc func gitStashSave(_ sender: AnyObject?) {
         guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "stash-save", path: target.path)
+        openMainApp(action: "stash-save-prompt", path: target.path)
+    }
+
+    @objc func gitSubmoduleUpdate(_ sender: AnyObject?) {
+        guard let target = FIFinderSyncController.default().targetedURL() else { return }
+        openMainApp(action: "submodule-update", path: target.path)
+    }
+
+    @objc func gitResetHard(_ sender: AnyObject?) {
+        guard let target = FIFinderSyncController.default().targetedURL() else { return }
+        openMainApp(action: "reset-hard", path: target.path)
+    }
+
+    @objc func gitCleanAll(_ sender: AnyObject?) {
+        guard let target = FIFinderSyncController.default().targetedURL() else { return }
+        openMainApp(action: "clean-xdf", path: target.path)
     }
     
     @objc func gitStashPop(_ sender: AnyObject?) {

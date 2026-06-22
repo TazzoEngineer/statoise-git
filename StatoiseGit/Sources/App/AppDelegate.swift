@@ -43,7 +43,98 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         preferencesWindowController?.showWindow(self)
         NSApp.activate(ignoringOtherApps: true)
     }
-    
+
+    // MARK: - Git Menu Actions
+
+    @IBAction func menuResetHard(_ sender: Any?) {
+        guard let repo = selectRepository(prompt: "Select repository for Reset --hard HEAD") else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Reset --hard HEAD"
+        alert.informativeText = "This will discard ALL uncommitted changes (staged and unstaged) in:\n\(repo)\n\nThis cannot be undone. Continue?"
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "Reset")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        runGitAction(title: "Git Reset --hard HEAD", path: repo) {
+            try await GitCommandRunner.shared.resetHard(at: repo)
+        }
+    }
+
+    @IBAction func menuCleanAll(_ sender: Any?) {
+        guard let repo = selectRepository(prompt: "Select repository for Clean -xdf") else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Clean -xdf"
+        alert.informativeText = "This will permanently delete ALL untracked and ignored files in:\n\(repo)\n\nThis includes build outputs, caches, etc. This cannot be undone. Continue?"
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "Clean")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        runGitAction(title: "Git Clean -xdf", path: repo) {
+            try await GitCommandRunner.shared.cleanAll(at: repo)
+        }
+    }
+
+    @IBAction func menuSubmoduleUpdate(_ sender: Any?) {
+        guard let repo = selectRepository(prompt: "Select repository for Submodule Update") else { return }
+
+        runGitAction(title: "Git Submodule Update --init", path: repo) {
+            try await GitCommandRunner.shared.submoduleUpdate(at: repo)
+        }
+    }
+
+    @IBAction func menuStashSave(_ sender: Any?) {
+        guard let repo = selectRepository(prompt: "Select repository for Stash Save") else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Stash Save (include untracked)"
+        alert.informativeText = "Enter a stash message (optional):"
+        let inputField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        inputField.placeholderString = "WIP on feature..."
+        alert.accessoryView = inputField
+        alert.addButton(withTitle: "Stash")
+        alert.addButton(withTitle: "Cancel")
+        alert.window.initialFirstResponder = inputField
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let message = inputField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        runGitAction(title: "Git Stash Save", path: repo) {
+            try await GitCommandRunner.shared.stashSave(at: repo, message: message.isEmpty ? nil : message, includeUntracked: true)
+        }
+    }
+
+    private func selectRepository(prompt: String) -> String? {
+        let repos = RepositoryPreferences.shared.repositories
+        guard !repos.isEmpty else {
+            let alert = NSAlert()
+            alert.messageText = "No Repositories"
+            alert.informativeText = "Add a repository in Preferences first."
+            alert.runModal()
+            return nil
+        }
+        if repos.count == 1 {
+            return repos[0].path
+        }
+
+        let alert = NSAlert()
+        alert.messageText = prompt
+        let popup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 350, height: 26), pullsDown: false)
+        for repo in repos {
+            popup.addItem(withTitle: URL(fileURLWithPath: repo.path).lastPathComponent)
+            popup.lastItem?.representedObject = repo.path as NSString
+        }
+        alert.accessoryView = popup
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        return popup.selectedItem?.representedObject as? String ?? repos[0].path
+    }
+
     @IBAction func gitClone(_ sender: Any?) {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
@@ -107,7 +198,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         case "diff":
             showDiffWindow(repositoryPath: path, file: file)
         case "stash-list":
-            showLogWindow(repositoryPath: path) // Reuse log viewer for now
+            showStashList(repositoryPath: path)
         case "pull":
             runGitAction(title: "Git Pull", path: path) { try await GitCommandRunner.shared.pull(at: path) }
         case "push":
@@ -121,9 +212,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 runGitAction(title: "Git Add", path: path) { try await GitCommandRunner.shared.add(at: path, files: files) }
             }
         case "stash-save":
-            runGitAction(title: "Git Stash Save", path: path) { try await GitCommandRunner.shared.stashSave(at: path, message: nil) }
+            runGitAction(title: "Git Stash Save", path: path) { try await GitCommandRunner.shared.stashSave(at: path, message: nil, includeUntracked: true) }
+        case "stash-save-prompt":
+            showStashSavePrompt(repositoryPath: path)
         case "stash-pop":
             runGitAction(title: "Git Stash Pop", path: path) { try await GitCommandRunner.shared.stashPop(at: path) }
+        case "reset-hard":
+            showResetHardConfirmation(repositoryPath: path)
+        case "clean-xdf":
+            showCleanConfirmation(repositoryPath: path)
+        case "submodule-update":
+            runGitAction(title: "Git Submodule Update --init", path: path) { try await GitCommandRunner.shared.submoduleUpdate(at: path) }
         default:
             break
         }
@@ -151,7 +250,77 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
     }
-    
+
+    private func showResetHardConfirmation(repositoryPath: String) {
+        let alert = NSAlert()
+        alert.messageText = "Reset --hard HEAD"
+        alert.informativeText = "This will discard ALL uncommitted changes (staged and unstaged) in:\n\(repositoryPath)\n\nThis cannot be undone. Continue?"
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "Reset")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        runGitAction(title: "Git Reset --hard HEAD", path: repositoryPath) {
+            try await GitCommandRunner.shared.resetHard(at: repositoryPath)
+        }
+    }
+
+    private func showCleanConfirmation(repositoryPath: String) {
+        let alert = NSAlert()
+        alert.messageText = "Clean -xdf"
+        alert.informativeText = "This will permanently delete ALL untracked and ignored files in:\n\(repositoryPath)\n\nThis includes build outputs, caches, etc. This cannot be undone. Continue?"
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "Clean")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        runGitAction(title: "Git Clean -xdf", path: repositoryPath) {
+            try await GitCommandRunner.shared.cleanAll(at: repositoryPath)
+        }
+    }
+
+    private func showStashSavePrompt(repositoryPath: String) {
+        let alert = NSAlert()
+        alert.messageText = "Stash Save (include untracked)"
+        alert.informativeText = "Enter a stash message (optional):"
+        let inputField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        inputField.placeholderString = "WIP on feature..."
+        alert.accessoryView = inputField
+        alert.addButton(withTitle: "Stash")
+        alert.addButton(withTitle: "Cancel")
+        alert.window.initialFirstResponder = inputField
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let message = inputField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        runGitAction(title: "Git Stash Save", path: repositoryPath) {
+            try await GitCommandRunner.shared.stashSave(at: repositoryPath, message: message.isEmpty ? nil : message, includeUntracked: true)
+        }
+    }
+
+    private func showStashList(repositoryPath: String) {
+        Task {
+            do {
+                let output = try await GitCommandRunner.shared.stashList(at: repositoryPath)
+                let alert = NSAlert()
+                alert.messageText = "Git Stash List"
+                if output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    alert.informativeText = "No stashes found."
+                } else {
+                    alert.informativeText = output
+                }
+                alert.alertStyle = .informational
+                alert.runModal()
+            } catch {
+                let alert = NSAlert()
+                alert.messageText = "Git Stash List Failed"
+                alert.informativeText = error.localizedDescription
+                alert.alertStyle = .critical
+                alert.runModal()
+            }
+        }
+    }
+
     private func showCommitWindow(repositoryPath: String) {
         let controller = CommitWindowController(repositoryPath: repositoryPath)
         commitWindowControllers.append(controller)
