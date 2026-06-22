@@ -67,6 +67,15 @@ workflows:
 
                 echo "Build succeeded"
 
+                # Copy app to deploy dir for artifact upload
+                APP_PATH="../build/DerivedData/Build/Products/Debug/Statoise Git.app"
+                if [ -d "$APP_PATH" ]; then
+                  ditto "$APP_PATH" "$BITRISE_DEPLOY_DIR/Statoise Git.app"
+                  cd "$BITRISE_DEPLOY_DIR"
+                  zip -r -y "StatoiseGit-Debug.zip" "Statoise Git.app"
+                  rm -rf "Statoise Git.app"
+                fi
+
       - deploy-to-bitrise-io@2: {}
 
     triggers:
