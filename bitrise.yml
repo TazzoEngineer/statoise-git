@@ -23,8 +23,34 @@ app:
 workflows:
   primary:
     steps:
+      - script@1:
+          title: Script Build Channel
+          inputs:
+            - content: |-
+                set -ex
+                envman add --key BUILD_CHANNEL --value "macos"
+
+      - script@1:
+          title: Script Outer Version
+          inputs:
+            - content: |-
+                set -ex
+                envman add --key OUTER_VERSION --value "1.0.0"
+
+      - script@1:
+          title: Script Build Env
+          inputs:
+            - content: |-
+                set -ex
+                envman add --key GIT_TAG_BUILD --value "${BUILD_CHANNEL}-${OUTER_VERSION}.${BITRISE_BUILD_NUMBER}"
+                envman add --key FULLY_VERSION --value "${OUTER_VERSION}-${BUILD_CHANNEL}.${BITRISE_BUILD_NUMBER}"
+
       - activate-ssh-key@4: {}
       - git-clone@8: {}
+
+      - git-tag@1:
+          inputs:
+            - tag: "$GIT_TAG_BUILD"
 
       - script@1:
           title: Install xcodegen
@@ -67,13 +93,18 @@ workflows:
 
                 echo "Build succeeded"
 
-                # Copy app to deploy dir for artifact upload
-                APP_PATH="../build/DerivedData/Build/Products/Debug/Statoise Git.app"
+      - script@1:
+          title: Script artifacts
+          inputs:
+            - content: |
+                set -euo pipefail
+
+                APP_PATH="build/DerivedData/Build/Products/Debug/Statoise Git.app"
                 if [ -d "$APP_PATH" ]; then
                   ditto "$APP_PATH" "$BITRISE_DEPLOY_DIR/Statoise Git.app"
-                  cp ../scripts/install.sh "$BITRISE_DEPLOY_DIR/install.sh"
+                  cp scripts/install.sh "$BITRISE_DEPLOY_DIR/install.sh"
                   cd "$BITRISE_DEPLOY_DIR"
-                  zip -r -y "StatoiseGit-Debug.zip" "Statoise Git.app" install.sh
+                  zip -r -y "StatoiseGit-${FULLY_VERSION}.zip" "Statoise Git.app" install.sh
                   rm -rf "Statoise Git.app" install.sh
                 fi
 
