@@ -28,7 +28,7 @@ workflows:
           inputs:
             - content: |-
                 set -ex
-                envman add --key BUILD_CHANNEL --value "macos"
+                envman add --key BUILD_CHANNEL --value "preview"
 
       - script@1:
           title: Script Outer Version
