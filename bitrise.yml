@@ -16,11 +16,7 @@ meta:
     machine_type_id: g2-m1.8core
 
 trigger_map:
-  - push_branch: main
-    pipeline: pipeline-release
   - push_branch: master
-    pipeline: pipeline-release
-  - push_branch: develop
     pipeline: pipeline-debug
   - pull_request_source_branch: "*"
     pipeline: pipeline-debug
@@ -34,12 +30,6 @@ pipelines:
     stages:
       - stage-build-release: {}
 
-  pipeline-release-full:
-    stages:
-      - stage-build-release: {}
-      - stage-notarize: {}
-      - stage-distribute: {}
-
 stages:
   stage-build-debug:
     workflows:
@@ -49,17 +39,9 @@ stages:
     workflows:
       - build-release: {}
 
-  stage-notarize:
-    workflows:
-      - notarize: {}
-
-  stage-distribute:
-    workflows:
-      - distribute: {}
-
 workflows:
   # ----------------------------
-  # Debug build (PRs, develop)
+  # Debug build (master push, PRs)
   # ----------------------------
   build-debug:
     steps:
@@ -74,30 +56,40 @@ workflows:
                 if ! command -v xcodegen >/dev/null 2>&1; then
                   brew install xcodegen
                 fi
+                xcodegen --version
 
       - script@1:
-          title: Generate and build (Debug, unsigned)
+          title: Generate Xcode project
+          inputs:
+            - content: |
+                set -euo pipefail
+                cd StatoiseGit
+                xcodegen generate
+                echo "Generated project successfully"
+
+      - script@1:
+          title: Build (Debug, ad-hoc signing)
           inputs:
             - content: |
                 set -euo pipefail
 
                 cd StatoiseGit
-                xcodegen generate
 
                 xcodebuild \
                   -project StatoiseGit.xcodeproj \
                   -scheme "$SCHEME" \
                   -configuration Debug \
                   -destination "generic/platform=macOS" \
+                  -derivedDataPath ../build/DerivedData \
                   build \
-                  CODE_SIGNING_ALLOWED=NO
+                  CODE_SIGN_IDENTITY="-" \
+                  CODE_SIGNING_REQUIRED=NO \
+                  CODE_SIGNING_ALLOWED=YES
 
-      - deploy-to-bitrise-io@2:
-          inputs:
-            - is_compress: "true"
+                echo "Build succeeded"
 
   # ----------------------------
-  # Release build (main/master)
+  # Release build (manual trigger)
   # ----------------------------
   build-release:
     envs:
@@ -119,6 +111,7 @@ workflows:
           title: Generate Xcode project
           inputs:
             - content: |
+                set -euo pipefail
                 cd StatoiseGit
                 xcodegen generate
 
@@ -142,24 +135,10 @@ workflows:
                   -scheme "$SCHEME" \
                   -configuration Release \
                   -destination "generic/platform=macOS" \
-                  -archivePath "$BITRISE_DEPLOY_DIR/Statoise Git.xcarchive" \
+                  -archivePath "$BITRISE_DEPLOY_DIR/StatoiseGit.xcarchive" \
                   archive \
                   CODE_SIGN_IDENTITY="Developer ID Application" \
                   DEVELOPMENT_TEAM="$TEAM_ID"
-
-      - script@1:
-          title: Export app from archive
-          inputs:
-            - content: |
-                set -euo pipefail
-
-                ARCHIVE_PATH="$BITRISE_DEPLOY_DIR/Statoise Git.xcarchive"
-                APP_PATH="$BITRISE_DEPLOY_DIR/Statoise Git.app"
-
-                # Copy app from archive
-                cp -R "$ARCHIVE_PATH/Products/Applications/Statoise Git.app" "$APP_PATH"
-
-                echo "Exported app to: $APP_PATH"
 
       - script@1:
           title: Create DMG
@@ -167,107 +146,22 @@ workflows:
             - content: |
                 set -euo pipefail
 
+                ARCHIVE_PATH="$BITRISE_DEPLOY_DIR/StatoiseGit.xcarchive"
                 APP_PATH="$BITRISE_DEPLOY_DIR/Statoise Git.app"
-                DMG_PATH="$BITRISE_DEPLOY_DIR/Statoise Git.dmg"
 
-                # Get version from Info.plist
+                cp -R "$ARCHIVE_PATH/Products/Applications/Statoise Git.app" "$APP_PATH"
+
                 VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
                   "$APP_PATH/Contents/Info.plist")
 
-                DMG_NAME="Statoise Git-${VERSION}.dmg"
+                DMG_NAME="StatoiseGit-${VERSION}.dmg"
                 DMG_PATH="$BITRISE_DEPLOY_DIR/$DMG_NAME"
 
-                # Create DMG
                 hdiutil create -volname "Statoise Git" \
                   -srcfolder "$APP_PATH" \
                   -ov -format UDZO \
                   "$DMG_PATH"
 
                 echo "Created DMG: $DMG_PATH"
-                envman add --key DMG_PATH --value "$DMG_PATH"
-                envman add --key APP_VERSION --value "$VERSION"
-
-      - deploy-to-bitrise-io@2: {}
-
-  # ----------------------------
-  # Notarize with Apple
-  # ----------------------------
-  notarize:
-    steps:
-      - git-clone@8: {}
-
-      - artifact-pull@1:
-          inputs:
-            - artifact_sources: stage-build-release.*
-
-      - script@1:
-          title: Notarize DMG
-          inputs:
-            - content: |
-                set -euo pipefail
-
-                DMG_PATH=$(find "$BITRISE_DEPLOY_DIR" -name "*.dmg" | head -1)
-
-                if [ -z "$DMG_PATH" ]; then
-                  echo "Error: No DMG found"
-                  exit 1
-                fi
-
-                echo "Submitting for notarization: $DMG_PATH"
-
-                xcrun notarytool submit "$DMG_PATH" \
-                  --apple-id "$APPLE_ID" \
-                  --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-                  --team-id "$TEAM_ID" \
-                  --wait
-
-                echo "Stapling notarization ticket..."
-                xcrun stapler staple "$DMG_PATH"
-
-                echo "Notarization complete"
-
-      - deploy-to-bitrise-io@2: {}
-
-  # ----------------------------
-  # Distribute to team
-  # ----------------------------
-  distribute:
-    steps:
-      - artifact-pull@1:
-          inputs:
-            - artifact_sources: stage-notarize.*
-
-      - script@1:
-          title: Upload to distribution server
-          inputs:
-            - content: |
-                set -euo pipefail
-
-                DMG_PATH=$(find "$BITRISE_DEPLOY_DIR" -name "*.dmg" | head -1)
-
-                if [ -z "$DMG_PATH" ]; then
-                  echo "Error: No DMG found"
-                  exit 1
-                fi
-
-                echo "DMG ready for distribution: $DMG_PATH"
-                echo "File size: $(du -h "$DMG_PATH" | cut -f1)"
-
-                # -------------------------------------------------------
-                # Uncomment ONE of the following distribution methods:
-                # -------------------------------------------------------
-
-                # Option 1: Upload to S3
-                # aws s3 cp "$DMG_PATH" "s3://$S3_BUCKET/releases/"
-
-                # Option 2: Upload to internal server via curl
-                # curl -F "file=@$DMG_PATH" "$DISTRIBUTION_SERVER_URL/upload"
-
-                # Option 3: Create GitHub Release (requires gh CLI)
-                # gh release create "v${APP_VERSION}" "$DMG_PATH" \
-                #   --title "Statoise Git v${APP_VERSION}" \
-                #   --notes "Release v${APP_VERSION}"
-
-                echo "Distribution step complete. Configure upload target in bitrise.yml."
 
       - deploy-to-bitrise-io@2: {}
