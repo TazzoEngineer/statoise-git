@@ -67,13 +67,18 @@ class PreferencesWindowController: NSWindowController {
         
         let nameColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name"))
         nameColumn.title = "Repository"
-        nameColumn.width = 180
+        nameColumn.width = 150
+        nameColumn.minWidth = 80
+        nameColumn.resizingMask = .userResizingMask
         repositoryListView.addTableColumn(nameColumn)
 
         let pathColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("path"))
         pathColumn.title = "Parent Path"
         pathColumn.width = 360
+        pathColumn.minWidth = 100
+        pathColumn.resizingMask = .autoresizingMask
         repositoryListView.addTableColumn(pathColumn)
+        repositoryListView.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
         repositoryListView.headerView = NSTableHeaderView()
         
         scrollView.documentView = repositoryListView
