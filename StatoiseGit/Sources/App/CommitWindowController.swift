@@ -128,6 +128,13 @@ class CommitWindowController: NSWindowController {
         fileTableView.headerView = NSTableHeaderView()
         fileTableView.doubleAction = #selector(fileDoubleClicked(_:))
         fileTableView.target = self
+
+        // Context menu
+        let menu = NSMenu()
+        menu.addItem(NSMenuItem(title: "Revert", action: #selector(contextRevert(_:)), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Delete", action: #selector(contextDelete(_:)), keyEquivalent: ""))
+        fileTableView.menu = menu
+
         scrollView.documentView = fileTableView
         contentView.addSubview(scrollView)
         
@@ -270,6 +277,86 @@ class CommitWindowController: NSWindowController {
     
     @objc private func doCancel(_ sender: Any?) {
         window?.close()
+    }
+
+    // MARK: - Context Menu Actions
+
+    private func clickedOrSelectedFiles() -> [String] {
+        let entries = displayedEntries
+        let clickedRow = fileTableView.clickedRow
+        let selectedRows = fileTableView.selectedRowIndexes
+
+        if clickedRow >= 0, !selectedRows.contains(clickedRow) {
+            // Right-clicked on an unselected row: use only that row
+            guard clickedRow < entries.count else { return [] }
+            return [entries[clickedRow].filePath]
+        } else if !selectedRows.isEmpty {
+            return selectedRows.compactMap { $0 < entries.count ? entries[$0].filePath : nil }
+        } else if clickedRow >= 0, clickedRow < entries.count {
+            return [entries[clickedRow].filePath]
+        }
+        return []
+    }
+
+    @objc private func contextRevert(_ sender: Any?) {
+        let files = clickedOrSelectedFiles()
+        guard !files.isEmpty else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Revert \(files.count) file(s)?"
+        alert.informativeText = "This will discard all local changes and restore the file(s) to the last committed state. This cannot be undone."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Revert")
+        alert.addButton(withTitle: "Cancel")
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        Task {
+            do {
+                try await GitCommandRunner.shared.revert(at: repositoryPath, files: files)
+                await MainActor.run { self.loadStatus() }
+            } catch {
+                await MainActor.run {
+                    let errAlert = NSAlert(error: error)
+                    errAlert.runModal()
+                }
+            }
+        }
+    }
+
+    @objc private func contextDelete(_ sender: Any?) {
+        let files = clickedOrSelectedFiles()
+        guard !files.isEmpty else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Delete \(files.count) file(s)?"
+        alert.informativeText = "This will permanently delete the selected file(s) from disk. This cannot be undone."
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "Delete")
+        alert.addButton(withTitle: "Cancel")
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        let root = repositoryPath
+        var errors: [String] = []
+        for file in files {
+            let fullPath = (root as NSString).appendingPathComponent(file)
+            do {
+                try FileManager.default.removeItem(atPath: fullPath)
+            } catch {
+                errors.append("\(file): \(error.localizedDescription)")
+            }
+        }
+
+        if !errors.isEmpty {
+            let errAlert = NSAlert()
+            errAlert.messageText = "Some files could not be deleted"
+            errAlert.informativeText = errors.joined(separator: "\n")
+            errAlert.alertStyle = .warning
+            errAlert.runModal()
+        }
+
+        loadStatus()
     }
     
     @objc private func fileDoubleClicked(_ sender: Any?) {

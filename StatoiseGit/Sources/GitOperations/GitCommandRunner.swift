@@ -224,7 +224,11 @@ actor GitCommandRunner {
     func add(at path: String, files: [String]) async throws {
         _ = try await runGit(arguments: ["add"] + files, workingDirectory: path)
     }
-    
+
+    func revert(at path: String, files: [String]) async throws {
+        _ = try await runGit(arguments: ["checkout", "HEAD", "--"] + files, workingDirectory: path)
+    }
+
     func pull(at path: String) async throws {
         _ = try await runGit(arguments: ["pull", "--progress"], workingDirectory: path)
     }
