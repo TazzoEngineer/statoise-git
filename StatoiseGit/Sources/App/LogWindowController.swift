@@ -376,9 +376,26 @@ class LogWindowController: NSWindowController {
                         self.launchExternalDiffTool(externalTool, oldFile: oldFile, newFile: newFile)
                     }
                 } catch {
-                    await MainActor.run {
-                        let alert = NSAlert(error: error)
-                        alert.runModal()
+                    // Submodules (gitlinks) and other non-blob paths cannot always be exported
+                    // as files for external tools. Fall back to built-in textual diff.
+                    do {
+                        let diff = try await GitCommandRunner.shared.commitFileDiff(
+                            at: repositoryPath, hash: hash, file: filePath
+                        )
+                        await MainActor.run {
+                            let diffWindow = DiffWindowController(
+                                repositoryPath: self.repositoryPath,
+                                diffContent: diff,
+                                title: "\(filePath) @ \(String(hash.prefix(7)))"
+                            )
+                            diffWindow.showWindow(nil)
+                            diffWindow.window?.makeKeyAndOrderFront(nil)
+                        }
+                    } catch {
+                        await MainActor.run {
+                            let alert = NSAlert(error: error)
+                            alert.runModal()
+                        }
                     }
                 }
             }
@@ -866,9 +883,26 @@ class FileLogWindowController: NSWindowController {
                         ExternalDiffLauncher.launch(tool: externalTool, oldFile: oldFile, newFile: newFile)
                     }
                 } catch {
-                    await MainActor.run {
-                        let alert = NSAlert(error: error)
-                        alert.runModal()
+                    // Submodule entries cannot be exported as regular files for external diffs.
+                    // Fall back to built-in textual diff representation.
+                    do {
+                        let diff = try await GitCommandRunner.shared.commitFileDiff(
+                            at: repositoryPath, hash: hash, file: file
+                        )
+                        await MainActor.run {
+                            let diffWindow = DiffWindowController(
+                                repositoryPath: self.repositoryPath,
+                                diffContent: diff,
+                                title: "\(file) @ \(String(hash.prefix(7)))"
+                            )
+                            diffWindow.showWindow(nil)
+                            diffWindow.window?.makeKeyAndOrderFront(nil)
+                        }
+                    } catch {
+                        await MainActor.run {
+                            let alert = NSAlert(error: error)
+                            alert.runModal()
+                        }
                     }
                 }
             }

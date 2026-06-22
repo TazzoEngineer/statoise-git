@@ -287,7 +287,9 @@ class CommitWindowController: NSWindowController {
                     let headFile = try await GitCommandRunner.shared.exportFileAtRevision(
                         at: root, hash: "HEAD", file: file
                     )
-                    let workingFile = (root as NSString).appendingPathComponent(file)
+                    let workingFile = try await GitCommandRunner.shared.exportWorkingTreeItemForDiff(
+                        at: root, file: file
+                    )
                     await MainActor.run {
                         ExternalDiffLauncher.launch(tool: externalTool, oldFile: headFile, newFile: workingFile)
                     }

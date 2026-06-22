@@ -50,6 +50,17 @@ struct GitBranchInfo {
     let isCurrent: Bool
 }
 
+private struct GitTreeEntry {
+    let mode: String
+    let type: String
+    let object: String
+    let path: String
+
+    var isSubmodule: Bool {
+        mode == "160000" || type == "commit"
+    }
+}
+
 /// Runs git commands via the system git binary
 actor GitCommandRunner {
     
@@ -294,7 +305,7 @@ actor GitCommandRunner {
     func commitFileDiff(at path: String, hash: String, file: String) async throws -> String {
         let root = try await repositoryRoot(at: path)
         return try await runGit(
-            arguments: ["diff", "\(hash)~1", hash, "--", file],
+            arguments: ["diff", "--submodule=log", "\(hash)~1", hash, "--", file],
             workingDirectory: root
         )
     }
@@ -302,7 +313,7 @@ actor GitCommandRunner {
     func commitDiff(at path: String, hash: String) async throws -> String {
         let root = try await repositoryRoot(at: path)
         return try await runGit(
-            arguments: ["diff", "\(hash)~1", hash],
+            arguments: ["diff", "--submodule=log", "\(hash)~1", hash],
             workingDirectory: root
         )
     }
@@ -310,23 +321,29 @@ actor GitCommandRunner {
     /// Export a file at a specific revision to a temp file, returns the temp file path
     func exportFileAtRevision(at path: String, hash: String, file: String) async throws -> String {
         let root = try await repositoryRoot(at: path)
+
+        if let entry = try await treeEntry(at: root, revision: hash, file: file), entry.isSubmodule {
+            let content = makeSubmoduleRevisionSummary(path: entry.path, revisionLabel: hash, object: entry.object)
+            return try writeTempDiffContent(content, file: file, suffix: "_\(hash.prefix(7))", preferredExtension: "txt")
+        }
+
         let content = try await runGit(
             arguments: ["show", "\(hash):\(file)"],
             workingDirectory: root
         )
-        
-        let fileName = (file as NSString).lastPathComponent
-        let ext = (fileName as NSString).pathExtension
-        let baseName = (fileName as NSString).deletingPathExtension
-        let tempDir = "/tmp"
-        let tempPath = (tempDir as NSString).appendingPathComponent("\(baseName)_\(hash.prefix(7)).\(ext)")
-        try content.write(toFile: tempPath, atomically: true, encoding: .utf8)
-        return tempPath
+
+        return try writeTempDiffContent(content, file: file, suffix: "_\(hash.prefix(7))")
     }
     
     /// Export file at parent revision
     func exportFileAtParentRevision(at path: String, hash: String, file: String) async throws -> String {
         let root = try await repositoryRoot(at: path)
+
+        if let entry = try await treeEntry(at: root, revision: "\(hash)~1", file: file), entry.isSubmodule {
+            let content = makeSubmoduleRevisionSummary(path: entry.path, revisionLabel: "\(hash)~1", object: entry.object)
+            return try writeTempDiffContent(content, file: file, suffix: "_\(hash.prefix(7))~1", preferredExtension: "txt")
+        }
+
         let content: String
         do {
             content = try await runGit(
@@ -337,14 +354,8 @@ actor GitCommandRunner {
             // File might not exist in parent (new file)
             content = ""
         }
-        
-        let fileName = (file as NSString).lastPathComponent
-        let ext = (fileName as NSString).pathExtension
-        let baseName = (fileName as NSString).deletingPathExtension
-        let tempDir = "/tmp"
-        let tempPath = (tempDir as NSString).appendingPathComponent("\(baseName)_\(hash.prefix(7))~1.\(ext)")
-        try content.write(toFile: tempPath, atomically: true, encoding: .utf8)
-        return tempPath
+
+        return try writeTempDiffContent(content, file: file, suffix: "_\(hash.prefix(7))~1")
     }
     
     /// Get log entries for a specific file
@@ -382,9 +393,120 @@ actor GitCommandRunner {
     }
     
     func diff(at path: String, file: String? = nil) async throws -> String {
-        var args = ["diff"]
-        if let file = file { args.append(file) }
+        var args = ["diff", "--submodule=log"]
+        if let file = file {
+            args += ["--", file]
+        }
         return try await runGit(arguments: args, workingDirectory: path)
+    }
+
+    func exportWorkingTreeItemForDiff(at path: String, file: String) async throws -> String {
+        let root = try await repositoryRoot(at: path)
+
+        if let headEntry = try await treeEntry(at: root, revision: "HEAD", file: file), headEntry.isSubmodule {
+            let summary = await makeWorkingTreeSubmoduleSummary(at: root, file: file, headObject: headEntry.object)
+            return try writeTempDiffContent(summary, file: file, suffix: "_working", preferredExtension: "txt")
+        }
+
+        if let indexEntry = try await indexEntry(at: root, file: file), indexEntry.isSubmodule {
+            let summary = await makeWorkingTreeSubmoduleSummary(at: root, file: file, headObject: indexEntry.object)
+            return try writeTempDiffContent(summary, file: file, suffix: "_working", preferredExtension: "txt")
+        }
+
+        return (root as NSString).appendingPathComponent(file)
+    }
+
+    private func treeEntry(at root: String, revision: String, file: String) async throws -> GitTreeEntry? {
+        let output = try await runGit(
+            arguments: ["ls-tree", revision, "--", file],
+            workingDirectory: root
+        )
+        return parseTreeEntry(output)
+    }
+
+    private func indexEntry(at root: String, file: String) async throws -> GitTreeEntry? {
+        let output = try await runGit(
+            arguments: ["ls-files", "--stage", "--", file],
+            workingDirectory: root
+        )
+        return parseIndexEntry(output)
+    }
+
+    private func parseTreeEntry(_ output: String) -> GitTreeEntry? {
+        guard let line = output.split(separator: "\n", omittingEmptySubsequences: true).first,
+              let tabIndex = line.firstIndex(of: "\t") else {
+            return nil
+        }
+
+        let metadata = line[..<tabIndex].split(separator: " ")
+        guard metadata.count >= 3 else { return nil }
+
+        return GitTreeEntry(
+            mode: String(metadata[0]),
+            type: String(metadata[1]),
+            object: String(metadata[2]),
+            path: String(line[line.index(after: tabIndex)...])
+        )
+    }
+
+    private func parseIndexEntry(_ output: String) -> GitTreeEntry? {
+        guard let line = output.split(separator: "\n", omittingEmptySubsequences: true).first,
+              let tabIndex = line.firstIndex(of: "\t") else {
+            return nil
+        }
+
+        let metadata = line[..<tabIndex].split(separator: " ")
+        guard metadata.count >= 3 else { return nil }
+
+        return GitTreeEntry(
+            mode: String(metadata[0]),
+            type: String(metadata[0]) == "160000" ? "commit" : "blob",
+            object: String(metadata[1]),
+            path: String(line[line.index(after: tabIndex)...])
+        )
+    }
+
+    private func makeSubmoduleRevisionSummary(path: String, revisionLabel: String, object: String) -> String {
+        return """
+        Submodule: \(path)
+        Revision: \(revisionLabel)
+        Commit: \(object)
+
+        This path is a Git submodule entry (gitlink), so it does not have file contents to export with git show.
+        Use the built-in diff view to inspect the submodule commit transition and nested log.
+        """
+    }
+
+    private func makeWorkingTreeSubmoduleSummary(at root: String, file: String, headObject: String) async -> String {
+        let submodulePath = (root as NSString).appendingPathComponent(file)
+        let rawStatus = (try? await runGit(
+            arguments: ["submodule", "status", "--", file],
+            workingDirectory: root
+        ).trimmingCharacters(in: .whitespacesAndNewlines)) ?? "(unavailable)"
+
+        let currentHead = (try? await runGitProcess(
+            arguments: ["rev-parse", "HEAD"],
+            workingDirectoryURL: URL(fileURLWithPath: submodulePath)
+        ).trimmingCharacters(in: .whitespacesAndNewlines)) ?? "(unavailable)"
+
+        return """
+        Submodule: \(file)
+        HEAD commit in superproject: \(headObject)
+        Working tree commit: \(currentHead)
+        Submodule status: \(rawStatus)
+
+        This path is a Git submodule entry (gitlink), so external diff compares the referenced commit IDs instead of file contents.
+        """
+    }
+
+    private func writeTempDiffContent(_ content: String, file: String, suffix: String, preferredExtension: String? = nil) throws -> String {
+        let fileName = (file as NSString).lastPathComponent
+        let baseName = (fileName as NSString).deletingPathExtension
+        let existingExtension = (fileName as NSString).pathExtension
+        let ext = preferredExtension ?? (existingExtension.isEmpty ? "txt" : existingExtension)
+        let tempPath = ("/tmp" as NSString).appendingPathComponent("\(baseName)\(suffix).\(ext)")
+        try content.write(toFile: tempPath, atomically: true, encoding: .utf8)
+        return tempPath
     }
     
     func stashList(at path: String) async throws -> String {
