@@ -71,7 +71,7 @@ workflows:
                 APP_PATH="../build/DerivedData/Build/Products/Debug/Statoise Git.app"
                 if [ -d "$APP_PATH" ]; then
                   ditto "$APP_PATH" "$BITRISE_DEPLOY_DIR/Statoise Git.app"
-                  cp scripts/install.sh "$BITRISE_DEPLOY_DIR/install.sh"
+                  cp ../scripts/install.sh "$BITRISE_DEPLOY_DIR/install.sh"
                   cd "$BITRISE_DEPLOY_DIR"
                   zip -r -y "StatoiseGit-Debug.zip" "Statoise Git.app" install.sh
                   rm -rf "Statoise Git.app" install.sh
