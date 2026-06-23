@@ -104,6 +104,27 @@ workflows:
                 echo "Build succeeded"
 
       - script@1:
+          title: Run Unit Tests
+          inputs:
+            - content: |
+                set -euo pipefail
+
+                cd StatoiseGit
+
+                xcodebuild \
+                  -project StatoiseGit.xcodeproj \
+                  -scheme StatoiseGitTests \
+                  -configuration Debug \
+                  -destination "platform=macOS" \
+                  -derivedDataPath ../build/DerivedData \
+                  test \
+                  CODE_SIGN_IDENTITY="-" \
+                  CODE_SIGNING_REQUIRED=NO \
+                  CODE_SIGNING_ALLOWED=YES
+
+                echo "Tests passed"
+
+      - script@1:
           title: Script artifacts
           inputs:
             - content: |

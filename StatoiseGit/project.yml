@@ -53,3 +53,30 @@ targets:
         PRODUCT_NAME: StatoiseGitFinderExtension
         SKIP_INSTALL: YES
     postCompileScripts: []
+
+  StatoiseGitTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests
+      - Sources/GitOperations
+      - Sources/Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.statoisegit.app.tests
+        PRODUCT_NAME: StatoiseGitTests
+        GENERATE_INFOPLIST_FILE: YES
+
+  StatoiseGitUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - UITests
+    dependencies:
+      - target: StatoiseGit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.statoisegit.app.uitests
+        PRODUCT_NAME: StatoiseGitUITests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: StatoiseGit

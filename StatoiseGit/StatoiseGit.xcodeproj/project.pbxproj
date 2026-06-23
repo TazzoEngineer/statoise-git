@@ -14,21 +14,28 @@
 		157E18EFC671331A3637A423 /* IgnoredIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACA3B58C4282DD0763E0D3E0 /* IgnoredIcon@2x.png */; };
 		1582312FC85200AE1A8B32FA /* ExternalDiffLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 743BB1BA12E5B36A01ECE8E3 /* ExternalDiffLauncher.swift */; };
 		16F33D5F08A46A1575EE8DA6 /* RepositoryPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1E8EAA7C4DF484A406360B /* RepositoryPreferences.swift */; };
+		2688E022FCB8D825A2DDD5B6 /* GitCommandRunnerBasicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDDDACC2B5B59753C6F1C52 /* GitCommandRunnerBasicTests.swift */; };
 		29882EC244C501E336802074 /* ModifiedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = E3C3CEC2BA377BCD65C71F98 /* ModifiedIcon.png */; };
 		2BA543BE336A25E5EC753804 /* DeletedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 2873FBD18873FA22C00422C7 /* DeletedIcon.png */; };
+		33FC3D67B1CC2AD9B52CBBF0 /* GitContextSwitchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADC5CCB40D28AA8977AC791 /* GitContextSwitchTests.swift */; };
 		403F758DCE42CE3CCDD4388E /* DiffWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E676FDF3F85259E84853C4EE /* DiffWindowController.swift */; };
+		49F13AA1ADEBD9E00F87F126 /* RepositoryPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1E8EAA7C4DF484A406360B /* RepositoryPreferences.swift */; };
 		63C8C91E73FF47D4FB15CB76 /* ModifiedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0BA087F90A91330CB4A2D5A2 /* ModifiedIcon@2x.png */; };
 		6B2143A00E94340B230CBB0F /* ConflictIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FA340617697C1B5283BFBC8 /* ConflictIcon@2x.png */; };
 		74B78C2CC2AC823A01418FFF /* PreferencesWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6233D2B2CA52CE3D7C98B975 /* PreferencesWindowController.swift */; };
 		7DA67EAD03E9AF4B6E3D5173 /* GitStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0F5DF8A2EDE7F05BD31FDB /* GitStatusService.swift */; };
 		823BE0474AA246168FD171C0 /* StatoiseGitFinderExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CB63294A20742608685B491B /* StatoiseGitFinderExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		82702194167B7D14BDE24B41 /* GitCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */; };
 		94E681C13199FF249B0A1FFB /* DeletedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 607625B67D504A9707CCFCCE /* DeletedIcon@2x.png */; };
 		9947EF51C2C54DE4EFE92469 /* LockedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 122F966201BDDCB3F7BCA674 /* LockedIcon@2x.png */; };
 		9B750BEF817A960085E59271 /* GitCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */; };
 		9EE7B88F19BDF9FD77856EFB /* GitCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */; };
+		ABED2826ECB1C203713CD094 /* GitSubmoduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F9C3E5DD31673EE14A3825B /* GitSubmoduleTests.swift */; };
 		B06BFD699B00CC577ACA1C55 /* GitGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D28A0757643F5E98A0F548 /* GitGraphView.swift */; };
+		B948838B780C182622BCF098 /* TestGitRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADB97FA218B2D0FD4F65799 /* TestGitRepository.swift */; };
 		B976384D78F68A5FF7E937AA /* LockedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 2410980BCC796C39BF079CEF /* LockedIcon.png */; };
 		CB908E500B92095B37393447 /* UnversionedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = B71A188705E458EFEBF669DB /* UnversionedIcon@2x.png */; };
+		D4951006EED4465B1E0CB506 /* CommitWindowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8CC23E5159D6846B06EBF9 /* CommitWindowUITests.swift */; };
 		D557D85E3A4229852F4AD996 /* CommitWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6897F64E4E20A65FDCAE0B /* CommitWindowController.swift */; };
 		D7EB5A1BD7DDB2C48B377B2E /* ConflictIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6202F5CAA92EAF670926EEF /* ConflictIcon.png */; };
 		DBAC6FF4EAA7FAEDBE7E013A /* FinderSync.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9811996E572CE1561785A645 /* FinderSync.framework */; };
@@ -46,6 +53,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		0719C8ABB6F2CB6990649D8D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8723700EA12D6594A983C7DA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C966957E3FAD6463B999364C;
+			remoteInfo = StatoiseGit;
+		};
 		1D615EE9A5D2F09F38F7907A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 8723700EA12D6594A983C7DA /* Project object */;
@@ -76,15 +90,22 @@
 		1A6897F64E4E20A65FDCAE0B /* CommitWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitWindowController.swift; sourceTree = "<group>"; };
 		2410980BCC796C39BF079CEF /* LockedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = LockedIcon.png; sourceTree = "<group>"; };
 		2873FBD18873FA22C00422C7 /* DeletedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = DeletedIcon.png; sourceTree = "<group>"; };
+		2ADB97FA218B2D0FD4F65799 /* TestGitRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestGitRepository.swift; sourceTree = "<group>"; };
+		2ADC5CCB40D28AA8977AC791 /* GitContextSwitchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitContextSwitchTests.swift; sourceTree = "<group>"; };
 		2C2FADF8506817EC479694F0 /* ReadOnlyIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ReadOnlyIcon.png; sourceTree = "<group>"; };
 		3232403EF1445F7F6E877B48 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
 		34A02571BA381C50EE4B41D8 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitCommandRunner.swift; sourceTree = "<group>"; };
+		3F9C3E5DD31673EE14A3825B /* GitSubmoduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitSubmoduleTests.swift; sourceTree = "<group>"; };
+		4EDDDACC2B5B59753C6F1C52 /* GitCommandRunnerBasicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitCommandRunnerBasicTests.swift; sourceTree = "<group>"; };
 		5B88068AB40BB0E07101F01F /* AddedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AddedIcon.png; sourceTree = "<group>"; };
+		5C94D453016FD76CAEB9255E /* StatoiseGitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StatoiseGitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		607625B67D504A9707CCFCCE /* DeletedIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "DeletedIcon@2x.png"; sourceTree = "<group>"; };
+		60D7255B5FC15FF77BE72330 /* StatoiseGitUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StatoiseGitUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6233D2B2CA52CE3D7C98B975 /* PreferencesWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesWindowController.swift; sourceTree = "<group>"; };
 		6FA340617697C1B5283BFBC8 /* ConflictIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ConflictIcon@2x.png"; sourceTree = "<group>"; };
 		743BB1BA12E5B36A01ECE8E3 /* ExternalDiffLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalDiffLauncher.swift; sourceTree = "<group>"; };
+		7B8CC23E5159D6846B06EBF9 /* CommitWindowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitWindowUITests.swift; sourceTree = "<group>"; };
 		8A0F5DF8A2EDE7F05BD31FDB /* GitStatusService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitStatusService.swift; sourceTree = "<group>"; };
 		9811996E572CE1561785A645 /* FinderSync.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FinderSync.framework; path = System/Library/Frameworks/FinderSync.framework; sourceTree = SDKROOT; };
 		A6202F5CAA92EAF670926EEF /* ConflictIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ConflictIcon.png; sourceTree = "<group>"; };
@@ -149,6 +170,8 @@
 			children = (
 				E37DFFACC7A95E1B544C3B2B /* StatoiseGit.app */,
 				CB63294A20742608685B491B /* StatoiseGitFinderExtension.appex */,
+				5C94D453016FD76CAEB9255E /* StatoiseGitTests.xctest */,
+				60D7255B5FC15FF77BE72330 /* StatoiseGitUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -173,6 +196,14 @@
 			path = FinderExtension;
 			sourceTree = "<group>";
 		};
+		4B79F5444DFE5A2CF2F05A51 /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				7B8CC23E5159D6846B06EBF9 /* CommitWindowUITests.swift */,
+			);
+			path = UITests;
+			sourceTree = "<group>";
+		};
 		7A1A6F7A1CDBF78CB00D5A31 = {
 			isa = PBXGroup;
 			children = (
@@ -180,6 +211,8 @@
 				485A38FC95F06D2B2DD7007F /* FinderExtension */,
 				C2530C173775E173E3AFB2CA /* GitOperations */,
 				E83C3D18CE2249BE39D03CBB /* Shared */,
+				C95F76E70413CB405693E8DD /* Tests */,
+				4B79F5444DFE5A2CF2F05A51 /* UITests */,
 				3A6BBB6CDFBA64EE442EC416 /* Frameworks */,
 				24F94A828BB27F83AAC2E051 /* Products */,
 			);
@@ -192,6 +225,17 @@
 			);
 			name = GitOperations;
 			path = Sources/GitOperations;
+			sourceTree = "<group>";
+		};
+		C95F76E70413CB405693E8DD /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				4EDDDACC2B5B59753C6F1C52 /* GitCommandRunnerBasicTests.swift */,
+				2ADC5CCB40D28AA8977AC791 /* GitContextSwitchTests.swift */,
+				3F9C3E5DD31673EE14A3825B /* GitSubmoduleTests.swift */,
+				2ADB97FA218B2D0FD4F65799 /* TestGitRepository.swift */,
+			);
+			path = Tests;
 			sourceTree = "<group>";
 		};
 		E83C3D18CE2249BE39D03CBB /* Shared */ = {
@@ -231,6 +275,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		9C8DBD433BA18014D4E1E1A2 /* StatoiseGitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 258C59509B7BA5A4D26001EB /* Build configuration list for PBXNativeTarget "StatoiseGitTests" */;
+			buildPhases = (
+				610FD58D69B7D5EA2E7DA90D /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = StatoiseGitTests;
+			packageProductDependencies = (
+			);
+			productName = StatoiseGitTests;
+			productReference = 5C94D453016FD76CAEB9255E /* StatoiseGitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		C966957E3FAD6463B999364C /* StatoiseGit */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 82FE94E9A384B65A251212C5 /* Build configuration list for PBXNativeTarget "StatoiseGit" */;
@@ -269,6 +330,24 @@
 			productReference = CB63294A20742608685B491B /* StatoiseGitFinderExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		EA4FDA3A704592F634AA7E57 /* StatoiseGitUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 83744B03A98AF296F78F6FE9 /* Build configuration list for PBXNativeTarget "StatoiseGitUITests" */;
+			buildPhases = (
+				4C9815996FCD4E7D5068D00C /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				760682537E4C12FAFA3E4507 /* PBXTargetDependency */,
+			);
+			name = StatoiseGitUITests;
+			packageProductDependencies = (
+			);
+			productName = StatoiseGitUITests;
+			productReference = 60D7255B5FC15FF77BE72330 /* StatoiseGitUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -278,6 +357,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
+					EA4FDA3A704592F634AA7E57 = {
+						TestTargetID = C966957E3FAD6463B999364C;
+					};
 				};
 			};
 			buildConfigurationList = 1FCA80066F4B6AD48F190837 /* Build configuration list for PBXProject "StatoiseGit" */;
@@ -296,6 +378,8 @@
 			targets = (
 				C966957E3FAD6463B999364C /* StatoiseGit */,
 				D5A75ABEEC02E41C46BB330A /* StatoiseGitFinderExtension */,
+				9C8DBD433BA18014D4E1E1A2 /* StatoiseGitTests */,
+				EA4FDA3A704592F634AA7E57 /* StatoiseGitUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -329,6 +413,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		4C9815996FCD4E7D5068D00C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D4951006EED4465B1E0CB506 /* CommitWindowUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		578CB910D3C01B379C2F0339 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -336,6 +428,19 @@
 				EF70BFE1E2CBA3C7102B0C85 /* FinderSyncExtension.swift in Sources */,
 				9EE7B88F19BDF9FD77856EFB /* GitCommandRunner.swift in Sources */,
 				16F33D5F08A46A1575EE8DA6 /* RepositoryPreferences.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		610FD58D69B7D5EA2E7DA90D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				82702194167B7D14BDE24B41 /* GitCommandRunner.swift in Sources */,
+				2688E022FCB8D825A2DDD5B6 /* GitCommandRunnerBasicTests.swift in Sources */,
+				33FC3D67B1CC2AD9B52CBBF0 /* GitContextSwitchTests.swift in Sources */,
+				ABED2826ECB1C203713CD094 /* GitSubmoduleTests.swift in Sources */,
+				49F13AA1ADEBD9E00F87F126 /* RepositoryPreferences.swift in Sources */,
+				B948838B780C182622BCF098 /* TestGitRepository.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -361,6 +466,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		760682537E4C12FAFA3E4507 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C966957E3FAD6463B999364C /* StatoiseGit */;
+			targetProxy = 0719C8ABB6F2CB6990649D8D /* PBXContainerItemProxy */;
+		};
 		E8F6CD132D97519A59A57264 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = D5A75ABEEC02E41C46BB330A /* StatoiseGitFinderExtension */;
@@ -369,6 +479,24 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		022648F928C0C27B72B8C725 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.statoisegit.app.uitests;
+				PRODUCT_NAME = StatoiseGitUITests;
+				SDKROOT = macosx;
+				TEST_TARGET_NAME = StatoiseGit;
+			};
+			name = Release;
+		};
 		0CE266D22C3E195830F53283 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -400,6 +528,23 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.statoisegit.app;
 				PRODUCT_NAME = "Statoise Git";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		25D6B21851F5A2BC634CE301 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.statoisegit.app.tests;
+				PRODUCT_NAME = StatoiseGitTests;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -461,6 +606,24 @@
 			};
 			name = Release;
 		};
+		BE7144615E96294E6D60B3D6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.statoisegit.app.uitests;
+				PRODUCT_NAME = StatoiseGitUITests;
+				SDKROOT = macosx;
+				TEST_TARGET_NAME = StatoiseGit;
+			};
+			name = Debug;
+		};
 		C93860E070BB5871EBBFF8B5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -474,6 +637,23 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.statoisegit.app;
 				PRODUCT_NAME = "Statoise Git";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		D4149978F394F5D9D0097E14 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.statoisegit.app.tests;
+				PRODUCT_NAME = StatoiseGitTests;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -572,6 +752,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		258C59509B7BA5A4D26001EB /* Build configuration list for PBXNativeTarget "StatoiseGitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				25D6B21851F5A2BC634CE301 /* Debug */,
+				D4149978F394F5D9D0097E14 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		624EC5A7DF7C3E345FA472B9 /* Build configuration list for PBXNativeTarget "StatoiseGitFinderExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -586,6 +775,15 @@
 			buildConfigurations = (
 				0FF95FD5C9C23AFF8A98101E /* Debug */,
 				C93860E070BB5871EBBFF8B5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		83744B03A98AF296F78F6FE9 /* Build configuration list for PBXNativeTarget "StatoiseGitUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BE7144615E96294E6D60B3D6 /* Debug */,
+				022648F928C0C27B72B8C725 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
