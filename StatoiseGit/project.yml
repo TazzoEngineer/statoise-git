@@ -6,6 +6,18 @@ options:
   xcodeVersion: "15.0"
   generateEmptyDirectories: true
 
+schemes:
+  StatoiseGit:
+    build:
+      targets:
+        StatoiseGit: all
+        StatoiseGitTests: [test]
+        StatoiseGitUITests: [test]
+    test:
+      targets:
+        - StatoiseGitTests
+        - StatoiseGitUITests
+
 settings:
   base:
     SWIFT_VERSION: "5.9"
