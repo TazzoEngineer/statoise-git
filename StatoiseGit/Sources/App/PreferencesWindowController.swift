@@ -1,4 +1,5 @@
 import Cocoa
+import FinderSync
 
 class PreferencesWindowController: NSWindowController {
     
@@ -8,7 +9,7 @@ class PreferencesWindowController: NSWindowController {
     
     init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 400),
+            contentRect: NSRect(x: 0, y: 0, width: 620, height: 400),
             styleMask: [.titled, .closable, .resizable, .miniaturizable],
             backing: .buffered,
             defer: false
@@ -53,11 +54,11 @@ class PreferencesWindowController: NSWindowController {
     }
     
     private func createRepositoriesView() -> NSView {
-        let view = NSView(frame: NSRect(x: 0, y: 0, width: 580, height: 340))
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 560, height: 340))
         
         // Table View
-        let scrollView = NSScrollView(frame: NSRect(x: 10, y: 50, width: 560, height: 280))
-        scrollView.autoresizingMask = [.width, .height]
+        let scrollView = NSScrollView(frame: NSRect(x: 10, y: 60, width: 540, height: 270))
+        scrollView.autoresizingMask = []
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = true
         
@@ -86,13 +87,18 @@ class PreferencesWindowController: NSWindowController {
         
         // Add/Remove buttons
         let addButton = NSButton(title: "+", target: self, action: #selector(addRepository))
-        addButton.frame = NSRect(x: 10, y: 10, width: 30, height: 30)
+        addButton.frame = NSRect(x: 10, y: 14, width: 30, height: 24)
         view.addSubview(addButton)
         
         let removeButton = NSButton(title: "−", target: self, action: #selector(removeRepository))
-        removeButton.frame = NSRect(x: 45, y: 10, width: 30, height: 30)
+        removeButton.frame = NSRect(x: 45, y: 14, width: 30, height: 24)
         view.addSubview(removeButton)
-        
+
+        let extensionButton = NSButton(title: "Open Login Items & Extensions…", target: self, action: #selector(openExtensionSettings))
+        extensionButton.bezelStyle = .rounded
+        extensionButton.frame = NSRect(x: 310, y: 12, width: 250, height: 26)
+        view.addSubview(extensionButton)
+
         return view
     }
     
@@ -136,7 +142,11 @@ class PreferencesWindowController: NSWindowController {
     }
     
     // MARK: - Actions
-    
+
+    @objc private func openExtensionSettings() {
+        FIFinderSyncController.showExtensionManagementInterface()
+    }
+
     @objc private func addRepository() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
