@@ -73,6 +73,16 @@ workflows:
                 echo "Generated project successfully"
 
       - script@1:
+          title: Patch version in Info.plist
+          inputs:
+            - content: |
+                set -euo pipefail
+                PLIST="StatoiseGit/Sources/App/Info.plist"
+                /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${OUTER_VERSION}" "$PLIST"
+                /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_CHANNEL}.${BITRISE_BUILD_NUMBER}" "$PLIST"
+                echo "Version: ${OUTER_VERSION} (${BUILD_CHANNEL}.${BITRISE_BUILD_NUMBER})"
+
+      - script@1:
           title: Build (Debug)
           inputs:
             - content: |
