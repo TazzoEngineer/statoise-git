@@ -404,6 +404,26 @@ actor GitCommandRunner {
         return try await runGit(arguments: args, workingDirectory: path)
     }
 
+    /// Diff working tree + staged changes against HEAD (shows all uncommitted changes)
+    func diffAgainstHEAD(at path: String, file: String? = nil) async throws -> String {
+        var args = ["diff", "HEAD", "--submodule=log"]
+        if let file = file {
+            args += ["--", file]
+        }
+        return try await runGit(arguments: args, workingDirectory: path)
+    }
+
+    /// Create an empty temp file for diff comparison (used for new files with no HEAD version)
+    nonisolated func createEmptyTempFile(for file: String, suffix: String) throws -> String {
+        let fileName = (file as NSString).lastPathComponent
+        let baseName = (fileName as NSString).deletingPathExtension
+        let existingExtension = (fileName as NSString).pathExtension
+        let ext = existingExtension.isEmpty ? "txt" : existingExtension
+        let tempPath = ("/tmp" as NSString).appendingPathComponent("\(baseName)\(suffix).\(ext)")
+        try "".write(toFile: tempPath, atomically: true, encoding: .utf8)
+        return tempPath
+    }
+
     func exportWorkingTreeItemForDiff(at path: String, file: String) async throws -> String {
         let root = try await repositoryRoot(at: path)
 

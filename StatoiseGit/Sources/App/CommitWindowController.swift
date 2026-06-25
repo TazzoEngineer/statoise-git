@@ -364,6 +364,7 @@ class CommitWindowController: NSWindowController {
         guard row >= 0, row < displayedEntries.count else { return }
         let entry = displayedEntries[row]
         let file = entry.filePath
+        let isNewFile = entry.indexStatus == .added || entry.workTreeStatus == .untracked
         
         let externalTool = RepositoryPreferences.shared.externalDiffTool
         if !externalTool.isEmpty {
@@ -371,9 +372,17 @@ class CommitWindowController: NSWindowController {
             Task {
                 do {
                     let root = try await GitCommandRunner.shared.repositoryRoot(at: repositoryPath)
-                    let headFile = try await GitCommandRunner.shared.exportFileAtRevision(
-                        at: root, hash: "HEAD", file: file
-                    )
+                    let headFile: String
+                    if isNewFile {
+                        // New file has no HEAD version - create empty temp file
+                        headFile = try GitCommandRunner.shared.createEmptyTempFile(for: file, suffix: "_HEAD")
+                    } else {
+                        // Use originalPath for renamed files to find the HEAD version
+                        let headPath = entry.originalPath ?? file
+                        headFile = try await GitCommandRunner.shared.exportFileAtRevision(
+                            at: root, hash: "HEAD", file: headPath
+                        )
+                    }
                     let workingFile = try await GitCommandRunner.shared.exportWorkingTreeItemForDiff(
                         at: root, file: file
                     )
@@ -391,7 +400,7 @@ class CommitWindowController: NSWindowController {
             // Built-in diff viewer
             Task {
                 do {
-                    let diff = try await GitCommandRunner.shared.diff(at: repositoryPath, file: file)
+                    let diff = try await GitCommandRunner.shared.diffAgainstHEAD(at: repositoryPath, file: file)
                     await MainActor.run {
                         let diffWindow = DiffWindowController(
                             repositoryPath: self.repositoryPath,
