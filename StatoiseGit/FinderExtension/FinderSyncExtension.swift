@@ -24,7 +24,7 @@ class FinderSyncExtension: FIFinderSync {
     }
     
     override var toolbarItemImage: NSImage {
-        return NSImage(systemSymbolName: "tortoise.fill", accessibilityDescription: "Statoise Git")
+        return NSImage(systemSymbolName: "arrow.triangle.branch", accessibilityDescription: "Statoise Git")
             ?? NSImage(named: NSImage.networkName)!
     }
     
