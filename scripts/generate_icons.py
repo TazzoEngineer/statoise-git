@@ -151,53 +151,85 @@ def generate_overlay_icon(name, bg_color, symbol_func, symbol_color, size):
     return img
 
 
+def bezier_curve(p0, p1, p2, p3, steps=50):
+    """Calculate cubic Bezier curve points."""
+    points = []
+    for i in range(steps + 1):
+        t = i / steps
+        x = (1-t)**3 * p0[0] + 3*(1-t)**2*t * p1[0] + 3*(1-t)*t**2 * p2[0] + t**3 * p3[0]
+        y = (1-t)**3 * p0[1] + 3*(1-t)**2*t * p1[1] + 3*(1-t)*t**2 * p2[1] + t**3 * p3[1]
+        points.append((x, y))
+    return points
+
+
+def draw_thick_bezier(draw, p0, p1, p2, p3, color, width, steps=50):
+    """Draw a thick smooth Bezier curve by drawing circles along the path."""
+    points = bezier_curve(p0, p1, p2, p3, steps)
+    r = width / 2
+    for (x, y) in points:
+        draw.ellipse([x - r, y - r, x + r, y + r], fill=color)
+
+
 def generate_app_icon(size):
-    """Generate app icon: rounded square with git branch symbol and 'S'."""
+    """Generate app icon: Git orange background with bold branch fork symbol."""
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    # Rounded rectangle background (gradient-like: dark blue to teal)
+    # Rounded rectangle background - Git orange
     margin = size // 16
     corner_radius = size // 5
-    bg_color = (41, 60, 93)  # Dark navy blue
+    bg_color = (240, 80, 50)  # Git orange #F05032
 
-    # Draw rounded rect
     bbox = [margin, margin, size - margin, size - margin]
     draw.rounded_rectangle(bbox, radius=corner_radius, fill=bg_color)
 
-    # Draw git branch symbol
+    # Draw bold git branch fork symbol (white)
     cx, cy = size // 2, size // 2
     s = size // 3
-    node_r = size // 16
-    line_w = max(4, size // 40)
-    branch_color = (100, 200, 240)  # Light cyan/blue
+    node_r = max(3, size // 12)
+    line_w = max(4, size // 18)
+    sym_color = (255, 255, 255)
 
-    # Main vertical line (trunk)
-    trunk_top = cy - s * 0.7
-    trunk_bottom = cy + s * 0.7
-    draw.line([(cx - s * 0.15, trunk_top), (cx - s * 0.15, trunk_bottom)],
-              fill=branch_color, width=line_w)
+    # Main vertical trunk (left)
+    trunk_x = cx - s * 0.2
+    trunk_top = cy - s * 0.85
+    trunk_bottom = cy + s * 0.85
 
-    # Branch line
-    branch_start = (cx - s * 0.15, cy - s * 0.1)
-    branch_end = (cx + s * 0.35, cy - s * 0.5)
-    # Curved branch via intermediate point
-    mid = (cx + s * 0.1, cy - s * 0.1)
-    draw.line([branch_start, mid, branch_end], fill=branch_color, width=line_w, joint="curve")
+    # Branch endpoint (right, upper)
+    branch_x = cx + s * 0.5
+    branch_top = cy - s * 0.85
 
-    # Nodes (circles at endpoints)
-    for (nx, ny) in [(cx - s * 0.15, trunk_top), (cx - s * 0.15, trunk_bottom), branch_end]:
+    # Draw main trunk as thick line (circles along path for smoothness)
+    r = line_w / 2
+    steps = max(20, size // 4)
+    for i in range(steps + 1):
+        t = i / steps
+        y = trunk_top + (trunk_bottom - trunk_top) * t
+        draw.ellipse([trunk_x - r, y - r, trunk_x + r, y + r], fill=sym_color)
+
+    # Branch vertical segment (short trunk above fork point)
+    for i in range(steps + 1):
+        t = i / steps
+        y = branch_top + (cy - s * 0.3 - branch_top) * t
+        draw.ellipse([branch_x - r, y - r, branch_x + r, y + r], fill=sym_color)
+
+    # Smooth Bezier curve connecting trunk to branch
+    fork_y = cy + s * 0.15
+    curve_start = (trunk_x, fork_y)
+    ctrl1 = (trunk_x, cy - s * 0.1)
+    ctrl2 = (branch_x, cy - s * 0.05)
+    curve_end = (branch_x, cy - s * 0.3)
+    draw_thick_bezier(draw, curve_start, ctrl1, ctrl2, curve_end, sym_color, line_w, steps)
+
+    # Nodes (circles) at three endpoints - drawn last to cover line ends
+    nodes = [
+        (trunk_x, trunk_top),
+        (trunk_x, trunk_bottom),
+        (branch_x, branch_top),
+    ]
+    for (nx, ny) in nodes:
         draw.ellipse([nx - node_r, ny - node_r, nx + node_r, ny + node_r],
-                     fill=branch_color)
-
-    # 'S' letter (skip for very small sizes)
-    if size >= 64:
-        try:
-            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", size // 4)
-        except (OSError, IOError):
-            font = ImageFont.load_default()
-        text_color = (220, 230, 255)
-        draw.text((cx + s * 0.15, cy + s * 0.05), "S", fill=text_color, font=font, anchor="mm")
+                     fill=sym_color)
 
     return img
 
