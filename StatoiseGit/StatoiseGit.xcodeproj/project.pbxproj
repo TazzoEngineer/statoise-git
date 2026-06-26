@@ -20,6 +20,7 @@
 		33FC3D67B1CC2AD9B52CBBF0 /* GitContextSwitchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADC5CCB40D28AA8977AC791 /* GitContextSwitchTests.swift */; };
 		403F758DCE42CE3CCDD4388E /* DiffWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E676FDF3F85259E84853C4EE /* DiffWindowController.swift */; };
 		49F13AA1ADEBD9E00F87F126 /* RepositoryPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1E8EAA7C4DF484A406360B /* RepositoryPreferences.swift */; };
+		54B413FB4759DD7405519832 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BF5D1B0E4ACF9E2C8212516E /* Assets.xcassets */; };
 		63C8C91E73FF47D4FB15CB76 /* ModifiedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0BA087F90A91330CB4A2D5A2 /* ModifiedIcon@2x.png */; };
 		6B2143A00E94340B230CBB0F /* ConflictIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FA340617697C1B5283BFBC8 /* ConflictIcon@2x.png */; };
 		74B78C2CC2AC823A01418FFF /* PreferencesWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6233D2B2CA52CE3D7C98B975 /* PreferencesWindowController.swift */; };
@@ -118,6 +119,7 @@
 		BB5284C16FF81287DA9D8C42 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BC713CCFCEE5E40B1437166C /* NormalIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = NormalIcon.png; sourceTree = "<group>"; };
 		BCBD3B2A286F9E2EA21EEFB8 /* IgnoredIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = IgnoredIcon.png; sourceTree = "<group>"; };
+		BF5D1B0E4ACF9E2C8212516E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C5AA49F4E46426E9F8CB7B36 /* ReadOnlyIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ReadOnlyIcon@2x.png"; sourceTree = "<group>"; };
 		CB63294A20742608685B491B /* StatoiseGitFinderExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StatoiseGitFinderExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBECD02E88805A718E2E4906 /* NormalIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "NormalIcon@2x.png"; sourceTree = "<group>"; };
@@ -210,6 +212,7 @@
 				0F69CF9BA0FF7E14A04FA032 /* App */,
 				485A38FC95F06D2B2DD7007F /* FinderExtension */,
 				C2530C173775E173E3AFB2CA /* GitOperations */,
+				D5B63A38D60C1A7BE94B043B /* Resources */,
 				E83C3D18CE2249BE39D03CBB /* Shared */,
 				C95F76E70413CB405693E8DD /* Tests */,
 				4B79F5444DFE5A2CF2F05A51 /* UITests */,
@@ -236,6 +239,14 @@
 				2ADB97FA218B2D0FD4F65799 /* TestGitRepository.swift */,
 			);
 			path = Tests;
+			sourceTree = "<group>";
+		};
+		D5B63A38D60C1A7BE94B043B /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BF5D1B0E4ACF9E2C8212516E /* Assets.xcassets */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		E83C3D18CE2249BE39D03CBB /* Shared */ = {
@@ -297,6 +308,7 @@
 			buildConfigurationList = 82FE94E9A384B65A251212C5 /* Build configuration list for PBXNativeTarget "StatoiseGit" */;
 			buildPhases = (
 				ED888880381A0075CEA33D17 /* Sources */,
+				38C656336AB2EED23E4937D5 /* Resources */,
 				87430FDE5B83369E9D4DAA8D /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -407,6 +419,14 @@
 				F499AB2B803B1EA20902F1D2 /* ReadOnlyIcon@2x.png in Resources */,
 				152A9515FED654B49A7144A0 /* UnversionedIcon.png in Resources */,
 				CB908E500B92095B37393447 /* UnversionedIcon@2x.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		38C656336AB2EED23E4937D5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				54B413FB4759DD7405519832 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -183,7 +183,6 @@ def generate_app_icon(size):
     bbox = [margin, margin, size - margin, size - margin]
     draw.rounded_rectangle(bbox, radius=corner_radius, fill=bg_color)
 
-    # Draw bold git branch fork symbol (white)
     cx, cy = size // 2, size // 2
     s = size // 3
     node_r = max(3, size // 12)
