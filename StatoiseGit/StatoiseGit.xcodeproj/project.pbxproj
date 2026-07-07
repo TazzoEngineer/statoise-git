@@ -18,6 +18,7 @@
 		29882EC244C501E336802074 /* ModifiedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = E3C3CEC2BA377BCD65C71F98 /* ModifiedIcon.png */; };
 		2BA543BE336A25E5EC753804 /* DeletedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 2873FBD18873FA22C00422C7 /* DeletedIcon.png */; };
 		33FC3D67B1CC2AD9B52CBBF0 /* GitContextSwitchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADC5CCB40D28AA8977AC791 /* GitContextSwitchTests.swift */; };
+		3F1B8D45C1D811E965F41F20 /* GitDotPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39368286468DD8F8C99BA450 /* GitDotPathTests.swift */; };
 		403F758DCE42CE3CCDD4388E /* DiffWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E676FDF3F85259E84853C4EE /* DiffWindowController.swift */; };
 		49F13AA1ADEBD9E00F87F126 /* RepositoryPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1E8EAA7C4DF484A406360B /* RepositoryPreferences.swift */; };
 		54B413FB4759DD7405519832 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BF5D1B0E4ACF9E2C8212516E /* Assets.xcassets */; };
@@ -97,6 +98,7 @@
 		3232403EF1445F7F6E877B48 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
 		34A02571BA381C50EE4B41D8 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitCommandRunner.swift; sourceTree = "<group>"; };
+		39368286468DD8F8C99BA450 /* GitDotPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitDotPathTests.swift; sourceTree = "<group>"; };
 		3F9C3E5DD31673EE14A3825B /* GitSubmoduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitSubmoduleTests.swift; sourceTree = "<group>"; };
 		4EDDDACC2B5B59753C6F1C52 /* GitCommandRunnerBasicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitCommandRunnerBasicTests.swift; sourceTree = "<group>"; };
 		5B88068AB40BB0E07101F01F /* AddedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AddedIcon.png; sourceTree = "<group>"; };
@@ -235,6 +237,7 @@
 			children = (
 				4EDDDACC2B5B59753C6F1C52 /* GitCommandRunnerBasicTests.swift */,
 				2ADC5CCB40D28AA8977AC791 /* GitContextSwitchTests.swift */,
+				39368286468DD8F8C99BA450 /* GitDotPathTests.swift */,
 				3F9C3E5DD31673EE14A3825B /* GitSubmoduleTests.swift */,
 				2ADB97FA218B2D0FD4F65799 /* TestGitRepository.swift */,
 			);
@@ -458,6 +461,7 @@
 				82702194167B7D14BDE24B41 /* GitCommandRunner.swift in Sources */,
 				2688E022FCB8D825A2DDD5B6 /* GitCommandRunnerBasicTests.swift in Sources */,
 				33FC3D67B1CC2AD9B52CBBF0 /* GitContextSwitchTests.swift in Sources */,
+				3F1B8D45C1D811E965F41F20 /* GitDotPathTests.swift in Sources */,
 				ABED2826ECB1C203713CD094 /* GitSubmoduleTests.swift in Sources */,
 				49F13AA1ADEBD9E00F87F126 /* RepositoryPreferences.swift in Sources */,
 				B948838B780C182622BCF098 /* TestGitRepository.swift in Sources */,

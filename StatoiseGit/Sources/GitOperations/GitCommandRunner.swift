@@ -415,13 +415,39 @@ actor GitCommandRunner {
 
     /// Create an empty temp file for diff comparison (used for new files with no HEAD version)
     nonisolated func createEmptyTempFile(for file: String, suffix: String) throws -> String {
-        let fileName = (file as NSString).lastPathComponent
-        let baseName = (fileName as NSString).deletingPathExtension
-        let existingExtension = (fileName as NSString).pathExtension
-        let ext = existingExtension.isEmpty ? "txt" : existingExtension
-        let tempPath = ("/tmp" as NSString).appendingPathComponent("\(baseName)\(suffix).\(ext)")
+        let tempPath = Self.tempDiffPath(for: file, suffix: suffix, preferredExtension: nil)
         try "".write(toFile: tempPath, atomically: true, encoding: .utf8)
         return tempPath
+    }
+
+    /// Build a temp file path for diff/export content.
+    ///
+    /// Handles dot-files (names beginning with a period such as `.gitignore`) so the
+    /// generated temp file is not itself hidden and keeps a recognizable name/extension.
+    nonisolated static func tempDiffPath(for file: String, suffix: String, preferredExtension: String?) -> String {
+        let fileName = (file as NSString).lastPathComponent
+
+        // Strip any leading dots so the temp file is not hidden (e.g. ".gitignore").
+        let leadingDotsStripped = String(fileName.drop(while: { $0 == "." }))
+        let nameForParsing = leadingDotsStripped.isEmpty ? fileName : leadingDotsStripped
+
+        let existingExtension = (nameForParsing as NSString).pathExtension
+        let baseName: String
+        let ext: String
+        if let preferredExtension {
+            baseName = existingExtension.isEmpty ? nameForParsing : (nameForParsing as NSString).deletingPathExtension
+            ext = preferredExtension
+        } else if existingExtension.isEmpty {
+            // Pure dot-file like ".gitignore" / ".env": keep the name as the extension so
+            // syntax-aware tools still recognize it (e.g. "gitignore_HEAD.gitignore").
+            baseName = nameForParsing
+            ext = nameForParsing
+        } else {
+            baseName = (nameForParsing as NSString).deletingPathExtension
+            ext = existingExtension
+        }
+
+        return ("/tmp" as NSString).appendingPathComponent("\(baseName)\(suffix).\(ext)")
     }
 
     func exportWorkingTreeItemForDiff(at path: String, file: String) async throws -> String {
@@ -524,11 +550,7 @@ actor GitCommandRunner {
     }
 
     private func writeTempDiffContent(_ content: String, file: String, suffix: String, preferredExtension: String? = nil) throws -> String {
-        let fileName = (file as NSString).lastPathComponent
-        let baseName = (fileName as NSString).deletingPathExtension
-        let existingExtension = (fileName as NSString).pathExtension
-        let ext = preferredExtension ?? (existingExtension.isEmpty ? "txt" : existingExtension)
-        let tempPath = ("/tmp" as NSString).appendingPathComponent("\(baseName)\(suffix).\(ext)")
+        let tempPath = Self.tempDiffPath(for: file, suffix: suffix, preferredExtension: preferredExtension)
         try content.write(toFile: tempPath, atomically: true, encoding: .utf8)
         return tempPath
     }
