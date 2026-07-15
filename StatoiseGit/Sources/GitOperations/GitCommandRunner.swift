@@ -222,11 +222,16 @@ actor GitCommandRunner {
     }
     
     func add(at path: String, files: [String]) async throws {
-        _ = try await runGit(arguments: ["add"] + files, workingDirectory: path)
+        // Status/tracked file paths are relative to the repository root, so run
+        // `git add` from the root to avoid double-prefixing when `path` is a subdirectory.
+        let root = try await repositoryRoot(at: path)
+        _ = try await runGit(arguments: ["add"] + files, workingDirectory: root)
     }
 
     func revert(at path: String, files: [String]) async throws {
-        _ = try await runGit(arguments: ["checkout", "HEAD", "--"] + files, workingDirectory: path)
+        // File paths are relative to the repository root; run from the root.
+        let root = try await repositoryRoot(at: path)
+        _ = try await runGit(arguments: ["checkout", "HEAD", "--"] + files, workingDirectory: root)
     }
 
     func pull(at path: String) async throws {

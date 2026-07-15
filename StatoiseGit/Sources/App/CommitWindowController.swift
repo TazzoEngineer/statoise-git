@@ -337,26 +337,31 @@ class CommitWindowController: NSWindowController {
 
         guard alert.runModal() == .alertFirstButtonReturn else { return }
 
-        let root = repositoryPath
-        var errors: [String] = []
-        for file in files {
-            let fullPath = (root as NSString).appendingPathComponent(file)
-            do {
-                try FileManager.default.removeItem(atPath: fullPath)
-            } catch {
-                errors.append("\(file): \(error.localizedDescription)")
+        Task {
+            // File paths are relative to the repository root, not necessarily repositoryPath.
+            let root = (try? await GitCommandRunner.shared.repositoryRoot(at: repositoryPath)) ?? repositoryPath
+            var errors: [String] = []
+            for file in files {
+                let fullPath = (root as NSString).appendingPathComponent(file)
+                do {
+                    try FileManager.default.removeItem(atPath: fullPath)
+                } catch {
+                    errors.append("\(file): \(error.localizedDescription)")
+                }
+            }
+
+            await MainActor.run {
+                if !errors.isEmpty {
+                    let errAlert = NSAlert()
+                    errAlert.messageText = "Some files could not be deleted"
+                    errAlert.informativeText = errors.joined(separator: "\n")
+                    errAlert.alertStyle = .warning
+                    errAlert.runModal()
+                }
+
+                self.loadStatus()
             }
         }
-
-        if !errors.isEmpty {
-            let errAlert = NSAlert()
-            errAlert.messageText = "Some files could not be deleted"
-            errAlert.informativeText = errors.joined(separator: "\n")
-            errAlert.alertStyle = .warning
-            errAlert.runModal()
-        }
-
-        loadStatus()
     }
     
     @objc private func fileDoubleClicked(_ sender: Any?) {
