@@ -26,105 +26,109 @@ def draw_circle_badge(draw, size, bg_color, border_color=None):
 
 
 def draw_checkmark(draw, size, color):
-    """Draw a checkmark symbol."""
+    """Draw a bold checkmark symbol (large & thick for small-size legibility)."""
     cx, cy = size // 2, size // 2
-    s = size // 4
+    s = size * 0.44
     points = [
-        (cx - s * 0.6, cy),
-        (cx - s * 0.1, cy + s * 0.5),
-        (cx + s * 0.8, cy - s * 0.5),
+        (cx - s * 0.78, cy + s * 0.02),
+        (cx - s * 0.18, cy + s * 0.62),
+        (cx + s * 0.85, cy - s * 0.62),
     ]
-    draw.line(points, fill=color, width=max(3, size // 20), joint="curve")
+    w = max(7, size // 6)
+    draw.line(points, fill=color, width=w, joint="curve")
+    # Round the stroke ends for a cleaner bold tick
+    r = w / 2
+    for (px, py) in points:
+        draw.ellipse([px - r, py - r, px + r, py + r], fill=color)
 
 
 def draw_plus(draw, size, color):
-    """Draw a plus symbol."""
+    """Draw a bold plus symbol."""
     cx, cy = size // 2, size // 2
-    s = size // 5
-    w = max(3, size // 20)
+    s = size * 0.32
+    w = max(7, size // 6)
     draw.line([(cx - s, cy), (cx + s, cy)], fill=color, width=w)
     draw.line([(cx, cy - s), (cx, cy + s)], fill=color, width=w)
 
 
 def draw_x(draw, size, color):
-    """Draw an X symbol."""
+    """Draw a bold X symbol."""
     cx, cy = size // 2, size // 2
-    s = size // 5
-    w = max(3, size // 20)
+    s = size * 0.3
+    w = max(7, size // 6)
     draw.line([(cx - s, cy - s), (cx + s, cy + s)], fill=color, width=w)
     draw.line([(cx + s, cy - s), (cx - s, cy + s)], fill=color, width=w)
 
 
 def draw_exclamation(draw, size, color):
-    """Draw an exclamation mark."""
+    """Draw a bold exclamation mark."""
     cx, cy = size // 2, size // 2
-    s = size // 5
-    w = max(3, size // 18)
-    draw.line([(cx, cy - s), (cx, cy + s * 0.3)], fill=color, width=w)
-    dot_r = max(2, size // 40)
-    draw.ellipse([cx - dot_r, cy + s * 0.7 - dot_r, cx + dot_r, cy + s * 0.7 + dot_r], fill=color)
+    s = size // 4
+    w = max(6, size // 9)
+    draw.line([(cx, cy - s), (cx, cy + s * 0.25)], fill=color, width=w)
+    dot_r = max(3, size // 16)
+    draw.ellipse([cx - dot_r, cy + s * 0.65 - dot_r, cx + dot_r, cy + s * 0.65 + dot_r], fill=color)
 
 
 def draw_warning(draw, size, color):
-    """Draw a warning triangle with !"""
+    """Draw a bold '!' for conflicts (clear and legible at small sizes)."""
     cx, cy = size // 2, size // 2
-    s = size // 4
-    # Triangle
-    points = [(cx, cy - s), (cx - s, cy + s * 0.7), (cx + s, cy + s * 0.7)]
-    draw.polygon(points, outline=color, fill=None)
-    # Inner !
-    w = max(2, size // 30)
-    draw.line([(cx, cy - s * 0.3), (cx, cy + s * 0.2)], fill=color, width=w)
-    dot_r = max(1, size // 50)
-    draw.ellipse([cx - dot_r, cy + s * 0.4 - dot_r, cx + dot_r, cy + s * 0.4 + dot_r], fill=color)
+    s = size * 0.34
+    w = max(7, size // 6)
+    draw.line([(cx, cy - s), (cx, cy + s * 0.2)], fill=color, width=w)
+    dot_r = max(4, size // 11)
+    draw.ellipse([cx - dot_r, cy + s * 0.62 - dot_r, cx + dot_r, cy + s * 0.62 + dot_r], fill=color)
 
 
 def draw_dash(draw, size, color):
-    """Draw a dash/minus symbol."""
+    """Draw a bold dash/minus symbol."""
     cx, cy = size // 2, size // 2
-    s = size // 5
-    w = max(3, size // 20)
+    s = size * 0.32
+    w = max(7, size // 6)
     draw.line([(cx - s, cy), (cx + s, cy)], fill=color, width=w)
 
 
 def draw_question(draw, size, color):
-    """Draw a question mark."""
+    """Draw a bold question mark."""
     cx, cy = size // 2, size // 2
-    s = size // 5
-    w = max(2, size // 25)
+    s = size * 0.34
+    w = max(7, size // 7)
     # Curve of ?
-    arc_bbox = [cx - s * 0.6, cy - s, cx + s * 0.6, cy + s * 0.3]
+    arc_bbox = [cx - s * 0.62, cy - s, cx + s * 0.62, cy + s * 0.28]
     draw.arc(arc_bbox, start=180, end=360, fill=color, width=w)
-    draw.line([(cx + s * 0.6, cy - s * 0.35), (cx, cy + s * 0.1)], fill=color, width=w)
-    dot_r = max(1, size // 50)
-    draw.ellipse([cx - dot_r, cy + s * 0.5 - dot_r, cx + dot_r, cy + s * 0.5 + dot_r], fill=color)
+    draw.line([(cx + s * 0.62, cy - s * 0.3), (cx, cy + s * 0.18)], fill=color, width=w)
+    dot_r = max(4, size // 12)
+    draw.ellipse([cx - dot_r, cy + s * 0.6 - dot_r, cx + dot_r, cy + s * 0.6 + dot_r], fill=color)
 
 
 def draw_lock(draw, size, color):
-    """Draw a padlock symbol."""
+    """Draw a bold padlock symbol."""
     cx, cy = size // 2, size // 2
-    s = size // 5
-    w = max(2, size // 30)
+    s = size * 0.34
+    w = max(6, size // 9)
     # Lock body
-    body = [cx - s * 0.6, cy - s * 0.1, cx + s * 0.6, cy + s * 0.7]
+    body = [cx - s * 0.62, cy - s * 0.1, cx + s * 0.62, cy + s * 0.72]
     draw.rectangle(body, outline=color, width=w, fill=None)
     # Shackle
-    arc_bbox = [cx - s * 0.4, cy - s * 0.8, cx + s * 0.4, cy]
+    arc_bbox = [cx - s * 0.42, cy - s * 0.82, cx + s * 0.42, cy]
     draw.arc(arc_bbox, start=180, end=0, fill=color, width=w)
 
 
 def draw_pencil(draw, size, color):
-    """Draw a pencil/edit symbol."""
+    """Draw a bold pencil/edit symbol with a clear tip (distinct from a check)."""
     cx, cy = size // 2, size // 2
-    s = size // 4
-    w = max(2, size // 25)
-    # Diagonal line (pencil body)
-    draw.line([(cx - s * 0.6, cy + s * 0.6), (cx + s * 0.6, cy - s * 0.6)], fill=color, width=w)
-    # Pencil tip
+    s = size * 0.4
+    w = max(8, size // 6)
+    # Thick diagonal body
+    start = (cx - s * 0.55, cy + s * 0.55)
+    end = (cx + s * 0.62, cy - s * 0.62)
+    draw.line([start, end], fill=color, width=w, joint="curve")
+    # Solid triangular pencil tip at the lower-left end
+    tip = size * 0.26
     draw.polygon([
-        (cx - s * 0.6, cy + s * 0.6),
-        (cx - s * 0.8, cy + s * 0.8),
-        (cx - s * 0.4, cy + s * 0.8),
+        (cx - s * 0.85, cy + s * 0.85),
+        (cx - s * 0.85 + tip, cy + s * 0.4),
+        (cx - s * 0.4, cy + s * 0.85),
     ], fill=color)
 
 
@@ -143,10 +147,26 @@ OVERLAY_ICONS = [
 
 
 def generate_overlay_icon(name, bg_color, symbol_func, symbol_color, size):
-    """Generate a single overlay icon."""
+    """Generate a single overlay icon that fills the canvas edge-to-edge.
+
+    Finder scales the badge to a fixed fraction of the file icon (very small in
+    list view), so every pixel counts: the colored disc is drawn to the very
+    edge with only a hairline outline for separation, maximizing the visible
+    colored area and symbol size at tiny render sizes.
+    """
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    draw_circle_badge(draw, size, bg_color)
+    # Colored disc filling essentially the whole canvas.
+    margin = max(1, size // 40)
+    draw.ellipse([margin, margin, size - margin, size - margin], fill=bg_color)
+    # Hairline white ring hugging the edge for contrast on any background,
+    # without eating into the colored fill the way a thick halo would.
+    ring_w = max(2, size // 22)
+    draw.ellipse(
+        [margin, margin, size - margin, size - margin],
+        outline=(255, 255, 255, 255),
+        width=ring_w,
+    )
     symbol_func(draw, size, symbol_color)
     return img
 

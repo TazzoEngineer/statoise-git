@@ -127,11 +127,63 @@ actor GitCommandRunner {
     
     func status(at path: String) async throws -> [GitStatusEntry] {
         let root = try await repositoryRoot(at: path)
+        return try await statusIncludingSubmodules(root: root, prefix: "")
+    }
+
+    /// Run `git status` at `root` and recursively expand any checked-out
+    /// submodules so that modifications inside submodules produce accurate
+    /// per-file entries. Paths are reported relative to the top-level repository
+    /// via `prefix`.
+    private func statusIncludingSubmodules(root: String, prefix: String) async throws -> [GitStatusEntry] {
         let output = try await runGit(
             arguments: ["status", "--porcelain=v1", "-z", "-uall"],
             workingDirectory: root
         )
-        return parseStatus(output)
+
+        var entries = parseStatus(output).map { entry -> GitStatusEntry in
+            guard !prefix.isEmpty else { return entry }
+            return GitStatusEntry(
+                indexStatus: entry.indexStatus,
+                workTreeStatus: entry.workTreeStatus,
+                filePath: (prefix as NSString).appendingPathComponent(entry.filePath),
+                originalPath: entry.originalPath.map { (prefix as NSString).appendingPathComponent($0) }
+            )
+        }
+
+        for sub in await submoduleRelativePaths(at: root) {
+            let subFull = (root as NSString).appendingPathComponent(sub)
+            // Skip submodules that are not checked out (no .git gitlink present).
+            guard FileManager.default.fileExists(atPath: (subFull as NSString).appendingPathComponent(".git")) else {
+                continue
+            }
+            let subPrefix = prefix.isEmpty ? sub : (prefix as NSString).appendingPathComponent(sub)
+            if let subEntries = try? await statusIncludingSubmodules(root: subFull, prefix: subPrefix) {
+                entries.append(contentsOf: subEntries)
+            }
+        }
+
+        return entries
+    }
+
+    /// Read submodule paths declared in `.gitmodules` (relative to `root`).
+    /// Does not require the submodules to be initialized.
+    private func submoduleRelativePaths(at root: String) async -> [String] {
+        guard let output = try? await runGit(
+            arguments: ["config", "--file", ".gitmodules", "--get-regexp", "path"],
+            workingDirectory: root
+        ) else {
+            return []
+        }
+        var paths: [String] = []
+        for line in output.split(separator: "\n") {
+            // Format: "submodule.<name>.path <relative-path>"
+            let parts = line.split(separator: " ", maxSplits: 1)
+            if parts.count == 2 {
+                let rel = String(parts[1]).trimmingCharacters(in: .whitespaces)
+                if !rel.isEmpty { paths.append(rel) }
+            }
+        }
+        return paths
     }
     
     /// List all tracked files in the repository
