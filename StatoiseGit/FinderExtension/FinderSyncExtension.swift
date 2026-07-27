@@ -322,7 +322,15 @@ class FinderSyncExtension: FIFinderSync {
         var current = (path as NSString).deletingLastPathComponent
         while !current.isEmpty && current != "/" {
             if let status = statusCache[current] {
-                return status
+                // Only untracked/ignored directories are reported by git as a single
+                // entry whose children genuinely share the status. Other statuses
+                // (notably a `modified` submodule pointer in a superproject) must NOT
+                // be propagated to their children, otherwise every file inside a
+                // clean submodule would be incorrectly badged as modified.
+                if status == .untracked || status == .ignored {
+                    return status
+                }
+                return nil
             }
             // Also check with trailing slash removed (git status may report without)
             current = (current as NSString).deletingLastPathComponent
