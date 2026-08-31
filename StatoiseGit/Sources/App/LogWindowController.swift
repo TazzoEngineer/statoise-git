@@ -329,8 +329,7 @@ class LogWindowController: NSWindowController {
                 }
             } catch {
                 await MainActor.run {
-                    let alert = NSAlert(error: error)
-                    alert.runModal()
+                    GitErrorAlert.present(error, title: "Diff failed", window: self.window)
                 }
             }
         }
@@ -393,8 +392,7 @@ class LogWindowController: NSWindowController {
                         }
                     } catch {
                         await MainActor.run {
-                            let alert = NSAlert(error: error)
-                            alert.runModal()
+                            GitErrorAlert.present(error, title: "Diff failed", window: self.window)
                         }
                     }
                 }
@@ -417,8 +415,7 @@ class LogWindowController: NSWindowController {
                     }
                 } catch {
                     await MainActor.run {
-                        let alert = NSAlert(error: error)
-                        alert.runModal()
+                        GitErrorAlert.present(error, title: "Diff failed", window: self.window)
                     }
                 }
             }
@@ -900,8 +897,7 @@ class FileLogWindowController: NSWindowController {
                         }
                     } catch {
                         await MainActor.run {
-                            let alert = NSAlert(error: error)
-                            alert.runModal()
+                            GitErrorAlert.present(error, title: "Diff failed", window: self.window)
                         }
                     }
                 }
@@ -923,8 +919,7 @@ class FileLogWindowController: NSWindowController {
                     }
                 } catch {
                     await MainActor.run {
-                        let alert = NSAlert(error: error)
-                        alert.runModal()
+                        GitErrorAlert.present(error, title: "Diff failed", window: self.window)
                     }
                 }
             }
@@ -952,8 +947,7 @@ class FileLogWindowController: NSWindowController {
                 }
             } catch {
                 await MainActor.run {
-                    let alert = NSAlert(error: error)
-                    alert.runModal()
+                    GitErrorAlert.present(error, title: "Diff failed", window: self.window)
                 }
             }
         }

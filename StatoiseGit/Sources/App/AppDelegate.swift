@@ -167,8 +167,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         )
                     } catch {
                         await MainActor.run {
-                            let errorAlert = NSAlert(error: error)
-                            errorAlert.runModal()
+                            GitErrorAlert.present(error, title: "Clone failed")
                         }
                     }
                 }
@@ -234,19 +233,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 try await action()
                 // Refresh status cache after git operation
                 await GitStatusService.shared.refreshRepository(at: path)
-                
+
                 // Show success notification
-                let alert = NSAlert()
-                alert.messageText = title
-                alert.informativeText = "Completed successfully."
-                alert.alertStyle = .informational
-                alert.runModal()
+                await MainActor.run {
+                    let alert = NSAlert()
+                    alert.messageText = title
+                    alert.informativeText = "Completed successfully."
+                    alert.alertStyle = .informational
+                    alert.runModal()
+                }
             } catch {
-                let alert = NSAlert()
-                alert.messageText = "\(title) Failed"
-                alert.informativeText = error.localizedDescription
-                alert.alertStyle = .critical
-                alert.runModal()
+                await MainActor.run {
+                    GitErrorAlert.present(error, title: "\(title) Failed")
+                }
             }
         }
     }

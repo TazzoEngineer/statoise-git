@@ -28,6 +28,7 @@
 		7DA67EAD03E9AF4B6E3D5173 /* GitStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0F5DF8A2EDE7F05BD31FDB /* GitStatusService.swift */; };
 		823BE0474AA246168FD171C0 /* StatoiseGitFinderExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CB63294A20742608685B491B /* StatoiseGitFinderExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		82702194167B7D14BDE24B41 /* GitCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */; };
+		8302353A94F08C5647E624D3 /* GitErrorAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5F49A3DB4C39DC8F8B6E3D /* GitErrorAlert.swift */; };
 		94E681C13199FF249B0A1FFB /* DeletedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 607625B67D504A9707CCFCCE /* DeletedIcon@2x.png */; };
 		9947EF51C2C54DE4EFE92469 /* LockedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 122F966201BDDCB3F7BCA674 /* LockedIcon@2x.png */; };
 		9B750BEF817A960085E59271 /* GitCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */; };
@@ -122,6 +123,7 @@
 		BC713CCFCEE5E40B1437166C /* NormalIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = NormalIcon.png; sourceTree = "<group>"; };
 		BCBD3B2A286F9E2EA21EEFB8 /* IgnoredIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = IgnoredIcon.png; sourceTree = "<group>"; };
 		BF5D1B0E4ACF9E2C8212516E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BF5F49A3DB4C39DC8F8B6E3D /* GitErrorAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitErrorAlert.swift; sourceTree = "<group>"; };
 		C5AA49F4E46426E9F8CB7B36 /* ReadOnlyIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ReadOnlyIcon@2x.png"; sourceTree = "<group>"; };
 		CB63294A20742608685B491B /* StatoiseGitFinderExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StatoiseGitFinderExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBECD02E88805A718E2E4906 /* NormalIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "NormalIcon@2x.png"; sourceTree = "<group>"; };
@@ -156,6 +158,7 @@
 				1A6897F64E4E20A65FDCAE0B /* CommitWindowController.swift */,
 				E676FDF3F85259E84853C4EE /* DiffWindowController.swift */,
 				743BB1BA12E5B36A01ECE8E3 /* ExternalDiffLauncher.swift */,
+				BF5F49A3DB4C39DC8F8B6E3D /* GitErrorAlert.swift */,
 				A7D28A0757643F5E98A0F548 /* GitGraphView.swift */,
 				8A0F5DF8A2EDE7F05BD31FDB /* GitStatusService.swift */,
 				FD216546798873A884CD7860 /* Info.plist */,
@@ -477,6 +480,7 @@
 				403F758DCE42CE3CCDD4388E /* DiffWindowController.swift in Sources */,
 				1582312FC85200AE1A8B32FA /* ExternalDiffLauncher.swift in Sources */,
 				9B750BEF817A960085E59271 /* GitCommandRunner.swift in Sources */,
+				8302353A94F08C5647E624D3 /* GitErrorAlert.swift in Sources */,
 				B06BFD699B00CC577ACA1C55 /* GitGraphView.swift in Sources */,
 				7DA67EAD03E9AF4B6E3D5173 /* GitStatusService.swift in Sources */,
 				FAB586019A424711431B6085 /* LogWindowController.swift in Sources */,

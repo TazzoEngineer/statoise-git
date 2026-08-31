@@ -76,6 +76,36 @@ final class GitCommandRunnerBasicTests: XCTestCase {
         XCTAssertTrue(entries.isEmpty, "Working tree should be clean after commit")
     }
 
+    /// A failing commit must carry git's own explanation. `git commit` with an
+    /// empty index reports "nothing to commit" on stdout, not stderr, so an
+    /// error that only captured stderr would be blank in the dialog.
+    func testFailedCommitCarriesGitOutput() async {
+        do {
+            try await GitCommandRunner.shared.commit(at: repo.path, message: "Nothing staged")
+            XCTFail("Committing an empty index should fail")
+        } catch let error as GitError {
+            XCTAssertNotNil(error.errorDescription)
+            XCTAssertFalse(error.errorDescription!.isEmpty)
+            XCTAssertTrue(
+                error.diagnosticDetails.contains("nothing to commit"),
+                "Details should quote git verbatim, got: \(error.diagnosticDetails)"
+            )
+            XCTAssertTrue(error.diagnosticDetails.contains("git commit"))
+        } catch {
+            XCTFail("Expected GitError, got \(error)")
+        }
+    }
+
+    /// Guards the concurrent pipe drain: a command whose output exceeds the
+    /// 64KB pipe buffer used to deadlock when the pipes were read in sequence.
+    func testLargeOutputDoesNotDeadlock() async throws {
+        let bigContent = String(repeating: "line of text for the diff\n", count: 20_000)
+        try repo.writeFile("README.md", content: bigContent)
+
+        let diff = try await GitCommandRunner.shared.diff(at: repo.path)
+        XCTAssertGreaterThan(diff.count, 65_536)
+    }
+
     // MARK: - Diff
 
     func testDiff() async throws {

@@ -182,8 +182,7 @@ class CommitWindowController: NSWindowController {
                 }
             } catch {
                 await MainActor.run {
-                    let alert = NSAlert(error: error)
-                    alert.runModal()
+                    GitErrorAlert.present(error, title: "Loading status failed", window: self.window)
                 }
             }
         }
@@ -261,16 +260,27 @@ class CommitWindowController: NSWindowController {
         Task {
             do {
                 try await GitCommandRunner.shared.add(at: repositoryPath, files: Array(selectedFiles))
-                try await GitCommandRunner.shared.commit(at: repositoryPath, message: message)
-                
-                await MainActor.run {
-                    self.window?.close()
-                }
             } catch {
                 await MainActor.run {
-                    let alert = NSAlert(error: error)
-                    alert.runModal()
+                    GitErrorAlert.present(error, title: "Staging files failed", window: self.window)
                 }
+                return
+            }
+
+            do {
+                try await GitCommandRunner.shared.commit(at: repositoryPath, message: message)
+            } catch {
+                await MainActor.run {
+                    GitErrorAlert.present(error, title: "Commit failed", window: self.window)
+                    // The commit did not happen, so keep the window open with a
+                    // refreshed view of what is now staged.
+                    self.loadStatus()
+                }
+                return
+            }
+
+            await MainActor.run {
+                self.window?.close()
             }
         }
     }
@@ -317,8 +327,7 @@ class CommitWindowController: NSWindowController {
                 await MainActor.run { self.loadStatus() }
             } catch {
                 await MainActor.run {
-                    let errAlert = NSAlert(error: error)
-                    errAlert.runModal()
+                    GitErrorAlert.present(error, title: "Revert failed", window: self.window)
                 }
             }
         }
@@ -396,8 +405,7 @@ class CommitWindowController: NSWindowController {
                     }
                 } catch {
                     await MainActor.run {
-                        let alert = NSAlert(error: error)
-                        alert.runModal()
+                        GitErrorAlert.present(error, title: "Diff failed", window: self.window)
                     }
                 }
             }
@@ -417,8 +425,7 @@ class CommitWindowController: NSWindowController {
                     }
                 } catch {
                     await MainActor.run {
-                        let alert = NSAlert(error: error)
-                        alert.runModal()
+                        GitErrorAlert.present(error, title: "Diff failed", window: self.window)
                     }
                 }
             }

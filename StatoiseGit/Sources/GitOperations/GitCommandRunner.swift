@@ -61,6 +61,24 @@ struct GitTreeEntry {
     }
 }
 
+/// Thread-safe box used to collect a pipe's contents off the calling thread.
+private final class PipeBuffer: @unchecked Sendable {
+    private let lock = NSLock()
+    private var data = Data()
+
+    func set(_ newData: Data) {
+        lock.lock()
+        data = newData
+        lock.unlock()
+    }
+
+    var value: Data {
+        lock.lock()
+        defer { lock.unlock() }
+        return data
+    }
+}
+
 /// Runs git commands via the system git binary
 actor GitCommandRunner {
     
@@ -91,19 +109,31 @@ actor GitCommandRunner {
             throw error
         }
 
-        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+        // Read both pipes concurrently. Reading them one after another deadlocks
+        // whenever git fills the pipe buffer we are not draining yet (verbose
+        // hook output, submodule progress, ...).
+        let outputBuffer = PipeBuffer()
+        let errorBuffer = PipeBuffer()
+        let readGroup = DispatchGroup()
+        let readQueue = DispatchQueue(label: "com.statoisegit.git-io", attributes: .concurrent)
+        let outputHandle = outputPipe.fileHandleForReading
+        let errorHandle = errorPipe.fileHandleForReading
+        readQueue.async(group: readGroup) { outputBuffer.set(outputHandle.readDataToEndOfFile()) }
+        readQueue.async(group: readGroup) { errorBuffer.set(errorHandle.readDataToEndOfFile()) }
+        readGroup.wait()
 
         process.waitUntilExit()
 
-        let output = String(data: outputData, encoding: .utf8) ?? ""
-        let errorOutput = String(data: errorData, encoding: .utf8) ?? ""
+        let output = String(data: outputBuffer.value, encoding: .utf8) ?? ""
+        let errorOutput = String(data: errorBuffer.value, encoding: .utf8) ?? ""
 
         if process.terminationStatus != 0 {
-            gitLogger.error("git \(arguments.joined(separator: " "), privacy: .public) failed (exit \(process.terminationStatus)): \(errorOutput, privacy: .public)")
+            gitLogger.error("git \(arguments.joined(separator: " "), privacy: .public) failed (exit \(process.terminationStatus)): \(errorOutput, privacy: .public)\n\(output, privacy: .public)")
             throw GitError.commandFailed(
                 command: "git \(arguments.joined(separator: " "))",
+                workingDirectory: workingDirectoryURL?.path,
                 exitCode: Int(process.terminationStatus),
+                stdout: output,
                 stderr: errorOutput
             )
         }
@@ -730,15 +760,64 @@ actor GitCommandRunner {
 // MARK: - Errors
 
 enum GitError: LocalizedError {
-    case commandFailed(command: String, exitCode: Int, stderr: String)
+    case commandFailed(command: String, workingDirectory: String?, exitCode: Int, stdout: String, stderr: String)
     case notARepository(path: String)
-    
+
     var errorDescription: String? {
         switch self {
-        case .commandFailed(let command, let exitCode, let stderr):
-            return "Git command failed (\(exitCode)): \(command)\n\(stderr)"
+        case .commandFailed(let command, _, let exitCode, let stdout, let stderr):
+            // Prefer git's own words. On stderr the diagnosis comes first, often
+            // after warning/progress noise. On stdout (`nothing to commit`,
+            // `no changes added to commit`) the conclusion comes last.
+            if let line = Self.diagnosisLine(inStderr: stderr) {
+                return line
+            }
+            if let line = Self.meaningfulLines(stdout).last {
+                return line
+            }
+            return "\(command) exited with code \(exitCode)."
         case .notARepository(let path):
             return "Not a Git repository: \(path)"
         }
+    }
+
+    /// The full, unabridged git output plus the invocation that produced it,
+    /// suitable for a scrollable detail view or the clipboard.
+    var diagnosticDetails: String {
+        switch self {
+        case .commandFailed(let command, let workingDirectory, let exitCode, let stdout, let stderr):
+            var lines = ["$ \(command)"]
+            if let workingDirectory {
+                lines.append("(in \(workingDirectory))")
+            }
+            lines.append("exit code: \(exitCode)")
+            let trimmedStderr = stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmedStderr.isEmpty {
+                lines.append("\n--- stderr ---\n\(trimmedStderr)")
+            }
+            let trimmedStdout = stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmedStdout.isEmpty {
+                lines.append("\n--- stdout ---\n\(trimmedStdout)")
+            }
+            if trimmedStderr.isEmpty && trimmedStdout.isEmpty {
+                lines.append("\n(git produced no output)")
+            }
+            return lines.joined(separator: "\n")
+        case .notARepository(let path):
+            return "Not a Git repository: \(path)"
+        }
+    }
+
+    private static func meaningfulLines(_ text: String) -> [String] {
+        text
+            .split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+
+    private static func diagnosisLine(inStderr stderr: String) -> String? {
+        let lines = meaningfulLines(stderr)
+        let markers = ["fatal:", "error:", "CONFLICT"]
+        return lines.first { line in markers.contains { line.hasPrefix($0) } } ?? lines.first
     }
 }
