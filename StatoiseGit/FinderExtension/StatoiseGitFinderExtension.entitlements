@@ -10,5 +10,14 @@
 	<array>
 		<string>/Users/Shared/StatoiseGitShared/</string>
 	</array>
+	<!-- Finder refuses to hand the extension a directoryURL it cannot reach, so
+	     repositories under the TCC-protected folders (Documents, Desktop,
+	     Downloads) silently get no context menu and no overlay badges. -->
+	<key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+	<array>
+		<string>/Documents/</string>
+		<string>/Desktop/</string>
+		<string>/Downloads/</string>
+	</array>
 </dict>
 </plist>
