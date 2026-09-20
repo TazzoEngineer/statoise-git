@@ -339,7 +339,20 @@ class FinderSyncExtension: FIFinderSync {
     }
     
     // MARK: - Context Menu
-    
+
+    /// The path a menu action should act on: the targeted URL when it belongs to a
+    /// repository, otherwise the first selected item that does. `nil` means nothing in
+    /// the current Finder context is under git control.
+    private func repositoryTargetPath() -> String? {
+        let controller = FIFinderSyncController.default()
+        var candidates: [String] = []
+        if let target = controller.targetedURL() {
+            candidates.append(target.path)
+        }
+        candidates.append(contentsOf: (controller.selectedItemURLs() ?? []).map(\.path))
+        return candidates.first { findGitRoot(from: $0) != nil }
+    }
+
     override func menu(for menuKind: FIMenuKind) -> NSMenu {
         logger.notice("menu(for:) called, menuKind=\(String(describing: menuKind))")
         let menu = NSMenu(title: "Statoise Git")
@@ -347,9 +360,17 @@ class FinderSyncExtension: FIFinderSync {
         guard let target = FIFinderSyncController.default().targetedURL() else {
             return menu
         }
-        
+
+        // Finder hands us whole directory trees, so this is called for plenty of folders
+        // that have nothing to do with git. Offering Pull/Push/Reset there is noise at
+        // best and an error dialog at worst, so build no menu at all.
+        guard repositoryTargetPath() != nil else {
+            logger.notice("menu(for:) skipped, not a git repository: \(target.path)")
+            return menu
+        }
+
         let selectedItems = FIFinderSyncController.default().selectedItemURLs() ?? []
-        let path = target.path
+        let targetIsInRepository = findGitRoot(from: target.path) != nil
         
         // Git Pull
         let pullItem = NSMenuItem(title: "Git Pull…", action: #selector(gitPull(_:)), keyEquivalent: "")
@@ -385,8 +406,9 @@ class FinderSyncExtension: FIFinderSync {
         
         menu.addItem(NSMenuItem.separator())
         
-        // Git Add
-        if !selectedItems.isEmpty {
+        // Git Add passes names relative to the targeted container, so it only makes
+        // sense when that container is itself inside a repository.
+        if !selectedItems.isEmpty && targetIsInRepository {
             let addItem = NSMenuItem(title: "Git Add", action: #selector(gitAdd(_:)), keyEquivalent: "")
             addItem.image = NSImage(systemSymbolName: "plus.circle", accessibilityDescription: "Add")
             menu.addItem(addItem)
@@ -429,39 +451,39 @@ class FinderSyncExtension: FIFinderSync {
     }
     
     @objc func gitPull(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "pull", path: target.path)
+        guard let path = repositoryTargetPath() else { return }
+        openMainApp(action: "pull", path: path)
     }
     
     @objc func gitPush(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "push", path: target.path)
+        guard let path = repositoryTargetPath() else { return }
+        openMainApp(action: "push", path: path)
     }
     
     @objc func gitCommit(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "commit", path: target.path)
+        guard let path = repositoryTargetPath() else { return }
+        openMainApp(action: "commit", path: path)
     }
     
     @objc func gitFetch(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "fetch", path: target.path)
+        guard let path = repositoryTargetPath() else { return }
+        openMainApp(action: "fetch", path: path)
     }
     
     @objc func gitDiff(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
+        guard let path = repositoryTargetPath() else { return }
         let selectedItems = FIFinderSyncController.default().selectedItemURLs() ?? []
         // In some Finder contexts selectedItemURLs can be empty even when invoking
-        // the context menu on a concrete item. Fall back to targetedURL so App can
-        // resolve the correct diff target path.
-        let filePath = selectedItems.first?.path ?? target.path
+        // the context menu on a concrete item. Fall back to the resolved repository
+        // path so App can resolve the correct diff target path.
+        let filePath = selectedItems.first?.path ?? path
         let encodedFile = filePath.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        openMainApp(action: "diff", path: target.path, extraParams: "&file=\(encodedFile)")
+        openMainApp(action: "diff", path: path, extraParams: "&file=\(encodedFile)")
     }
     
     @objc func gitLog(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "log", path: target.path)
+        guard let path = repositoryTargetPath() else { return }
+        openMainApp(action: "log", path: path)
     }
     
     @objc func gitAdd(_ sender: AnyObject?) {
@@ -473,33 +495,33 @@ class FinderSyncExtension: FIFinderSync {
     }
     
     @objc func gitStashSave(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "stash-save-prompt", path: target.path)
+        guard let path = repositoryTargetPath() else { return }
+        openMainApp(action: "stash-save-prompt", path: path)
     }
 
     @objc func gitSubmoduleUpdate(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "submodule-update", path: target.path)
+        guard let path = repositoryTargetPath() else { return }
+        openMainApp(action: "submodule-update", path: path)
     }
 
     @objc func gitResetHard(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "reset-hard", path: target.path)
+        guard let path = repositoryTargetPath() else { return }
+        openMainApp(action: "reset-hard", path: path)
     }
 
     @objc func gitCleanAll(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "clean-xdf", path: target.path)
+        guard let path = repositoryTargetPath() else { return }
+        openMainApp(action: "clean-xdf", path: path)
     }
     
     @objc func gitStashPop(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "stash-pop", path: target.path)
+        guard let path = repositoryTargetPath() else { return }
+        openMainApp(action: "stash-pop", path: path)
     }
     
     @objc func gitStashList(_ sender: AnyObject?) {
-        guard let target = FIFinderSyncController.default().targetedURL() else { return }
-        openMainApp(action: "stash-list", path: target.path)
+        guard let path = repositoryTargetPath() else { return }
+        openMainApp(action: "stash-list", path: path)
     }
     
     // MARK: - Helpers
