@@ -1,0 +1,110 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  BUILD_CHANNEL: preview
+  OUTER_VERSION: "1.0.0"
+  APP_NAME: Statoise Git
+  DERIVED_DATA: build/DerivedData
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      contents: write # required to push the build tag
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute version
+        run: |
+          set -euo pipefail
+          echo "GIT_TAG_BUILD=${BUILD_CHANNEL}-${OUTER_VERSION}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          echo "FULLY_VERSION=${OUTER_VERSION}-${BUILD_CHANNEL}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+
+      - name: Install xcodegen
+        run: |
+          set -euo pipefail
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+          xcodegen --version
+
+      - name: Generate Xcode project
+        working-directory: StatoiseGit
+        run: xcodegen generate
+
+      - name: Patch version in Info.plist
+        run: |
+          set -euo pipefail
+          PLIST="StatoiseGit/Sources/App/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${OUTER_VERSION}" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_CHANNEL}.${GITHUB_RUN_NUMBER}" "$PLIST"
+          echo "Version: ${OUTER_VERSION} (${BUILD_CHANNEL}.${GITHUB_RUN_NUMBER})"
+
+      - name: Build (Debug)
+        working-directory: StatoiseGit
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project StatoiseGit.xcodeproj \
+            -scheme StatoiseGit \
+            -configuration Debug \
+            -destination "generic/platform=macOS" \
+            -derivedDataPath "../${DERIVED_DATA}" \
+            build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=YES
+
+      - name: Run unit tests
+        working-directory: StatoiseGit
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project StatoiseGit.xcodeproj \
+            -scheme StatoiseGit \
+            -configuration Debug \
+            -destination "platform=macOS" \
+            -derivedDataPath "../${DERIVED_DATA}" \
+            test \
+            -only-testing:StatoiseGitTests \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=YES
+
+      - name: Package artifact
+        run: |
+          set -euo pipefail
+          APP_PATH="${DERIVED_DATA}/Build/Products/Debug/${APP_NAME}.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Built app not found at ${APP_PATH}" >&2
+            exit 1
+          fi
+          STAGING=$(mktemp -d)
+          ditto "$APP_PATH" "$STAGING/${APP_NAME}.app"
+          cp scripts/install.sh "$STAGING/install.sh"
+          mkdir -p artifacts
+          # zip -y keeps the symlinks inside the .app bundle intact
+          (cd "$STAGING" && zip -r -q -y "StatoiseGit-${FULLY_VERSION}.zip" "${APP_NAME}.app" install.sh)
+          mv "$STAGING/StatoiseGit-${FULLY_VERSION}.zip" artifacts/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: StatoiseGit-${{ env.FULLY_VERSION }}
+          path: artifacts/*.zip
+          if-no-files-found: error
+
+      - name: Tag build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          set -euo pipefail
+          git tag "$GIT_TAG_BUILD"
+          git push origin "$GIT_TAG_BUILD"

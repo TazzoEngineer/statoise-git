@@ -2,6 +2,8 @@
 
 *[English](README.md) | 日本語*
 
+[![Build](https://github.com/TazzoEngineer/statoise-git/actions/workflows/build.yml/badge.svg)](https://github.com/TazzoEngineer/statoise-git/actions/workflows/build.yml)
+
 macOS 向けの Finder 統合 Git クライアント。TortoiseGit と同じ使い勝手を、AppKit ネイティブアプリで。
 
 Statoise Git は Git を普段の作業場所に持ち込みます。Finder でファイルやフォルダを右クリックすれば
@@ -72,7 +74,7 @@ StatoiseGit/
   Tests/                       git 操作のユニットテスト
   UITests/                     コミットウィンドウの UI テスト
 scripts/                       アイコン生成、DMG 作成、インストール補助
-bitrise.yml                    CI: 生成・ビルド・ユニットテスト・成果物パッケージ
+.github/workflows/build.yml    CI: 生成・ビルド・ユニットテスト・成果物パッケージ
 Makefile                       日常的なビルドコマンド
 ```
 

@@ -2,6 +2,8 @@
 
 *English | [日本語](README.ja.md)*
 
+[![Build](https://github.com/TazzoEngineer/statoise-git/actions/workflows/build.yml/badge.svg)](https://github.com/TazzoEngineer/statoise-git/actions/workflows/build.yml)
+
 A Finder-integrated Git client for macOS — TortoiseGit-style workflow, native AppKit app.
 
 Statoise Git puts Git where you already work: right-click any file or folder in Finder to
@@ -73,7 +75,7 @@ StatoiseGit/
   Tests/                       Unit tests for git operations
   UITests/                     UI tests for the commit window
 scripts/                       Icon generation, DMG packaging, install helper
-bitrise.yml                    CI: generate, build, unit test, package artifact
+.github/workflows/build.yml    CI: generate, build, unit test, package artifact
 Makefile                       Everyday build commands
 ```
 

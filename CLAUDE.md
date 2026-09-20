@@ -82,5 +82,5 @@ Finder silently drops the context menu and badges.
   toggled off/on in System Settings → General → Login Items & Extensions) before they take effect.
 - Builds are ad-hoc signed (`CODE_SIGN_IDENTITY="-"`); there is no Developer ID or notarization
   in this repository, and `scripts/install.sh` runs `xattr -cr` for that reason.
-- `bitrise.yml` patches the version into `Sources/App/Info.plist` at build time — the committed
+- `.github/workflows/build.yml` patches the version into `Sources/App/Info.plist` at build time — the committed
   values (`0.0.0` / `local.0`) are placeholders, don't "fix" them.
