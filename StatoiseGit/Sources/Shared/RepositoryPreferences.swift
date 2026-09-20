@@ -28,8 +28,7 @@ class RepositoryPreferences {
 
     private static let sharedDirectoryPath = "/Users/Shared/StatoiseGitShared"
     private static let legacyPreferenceSuites = [
-        "group.com.statoisegit",
-        "7H8HPZ8M25.com.statoisegit"
+        "group.com.statoisegit"
     ]
     
     private let defaults: UserDefaults
