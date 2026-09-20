@@ -12,7 +12,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         showPreferences(nil)
         
         // Start background git status service for Finder Extension
-        GitStatusService.shared.start()
+        Task { await GitStatusService.shared.start() }
         
         // Register URL scheme handler
         NSAppleEventManager.shared().setEventHandler(

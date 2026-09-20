@@ -4,27 +4,40 @@ import os.log
 private let logger = Logger(subsystem: "com.statoisegit.app", category: "GitStatusService")
 
 /// Background service that periodically runs git status on monitored repositories
-/// and writes the results to the App Group shared container for the Finder Extension to read.
-class GitStatusService {
+/// and writes the results to the shared cache directory for the Finder Extension to read.
+///
+/// An actor with a single refresh loop rather than a timer: a cycle can easily outlast its
+/// own interval (a directory of clones publishes dozens of repositories at once), and two
+/// cycles running at the same time corrupt the bookkeeping they share.
+actor GitStatusService {
     
     static let shared = GitStatusService()
     
-    private var timer: Timer?
-    private let interval: TimeInterval = 3.0 // Refresh every 3 seconds
+    private var refreshTask: Task<Void, Never>?
+    /// One folder can list dozens of repositories (a directory of clones), and running
+    /// git status on all of them every cycle costs more CPU than the badges are worth.
+    /// Those get a slower cadence and a per-cycle budget; the repository being browsed
+    /// into still refreshes every cycle.
+    private let listedRefreshInterval: TimeInterval = 30.0
+    private let maxListedRefreshesPerCycle = 6
+    private let observationTimeout: TimeInterval = 45.0
+    private var lastRefreshed: [String: Date] = [:]
     
     func start() {
-        // Run immediately
-        Task { await refreshAll() }
-        
-        // Schedule periodic refresh
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { await self?.refreshAll() }
+        guard refreshTask == nil else { return }
+
+        refreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.refreshAll()
+                // Sleeping after the work keeps slow cycles from stacking up.
+                try? await Task.sleep(nanoseconds: UInt64(3.0 * 1_000_000_000))
+            }
         }
     }
     
     func stop() {
-        timer?.invalidate()
-        timer = nil
+        refreshTask?.cancel()
+        refreshTask = nil
     }
     
     /// Refresh a specific repository immediately (e.g., after a git operation)
@@ -53,15 +66,34 @@ class GitStatusService {
     
     private func refreshAll() async {
         let prefs = RepositoryPreferences.shared
-        let repos = prefs.enabledRepositoryPaths
-        guard !repos.isEmpty else {
-            logger.notice("No repositories configured; skipping filesystem scan")
+        // The configured repositories are watched at all times; the rest is whatever the
+        // Finder extension reports it is showing, so browsing to a repository is enough.
+        let alwaysWatched = prefs.enabledRepositoryPaths
+        // Finder shuts the extension down when no window needs it, leaving its last
+        // request behind; anything that stopped being re-stamped is not being shown.
+        let published = prefs.readObservedRepositories()
+        let observed = published.isFresh(within: observationTimeout) ? published : ObservedRepositories()
+
+        let urgent = Set(alwaysWatched + observed.inside)
+        let now = Date()
+        let due = observed.listed
+            .filter { !urgent.contains($0) }
+            .filter { now.timeIntervalSince(lastRefreshed[$0] ?? .distantPast) >= listedRefreshInterval }
+            .prefix(maxListedRefreshesPerCycle)
+
+        let known = urgent.union(observed.listed)
+        let pathsToCheck = urgent.sorted() + due
+
+        guard !known.isEmpty else {
+            logger.notice("Nothing to watch; skipping filesystem scan")
             prefs.writeMonitoredRepoRoots([])
+            prefs.pruneStatusCaches(keeping: [])
+            lastRefreshed.removeAll()
             return
         }
-        
-        let pathsToCheck = repos
-        logger.notice("Using \(repos.count) configured repos")
+
+        lastRefreshed = lastRefreshed.filter { known.contains($0.key) }
+        logger.notice("Refreshing \(pathsToCheck.count) of \(known.count) repos")
         
         var repoRoots: [String] = []
         
@@ -84,6 +116,7 @@ class GitStatusService {
                     }
 
                     repoRoots.append(repoRoot)
+                    lastRefreshed[repoPath] = Date()
 
                     let entries = try await runner.status(at: repoRoot)
 
@@ -99,7 +132,9 @@ class GitStatusService {
             }
         }
         
-        prefs.writeMonitoredRepoRoots(repoRoots)
+        // Everything known stays cached; only this cycle's slice was recomputed.
+        prefs.writeMonitoredRepoRoots(known.union(repoRoots).sorted())
+        prefs.pruneStatusCaches(keeping: Array(known.union(repoRoots)))
     }
     
 }

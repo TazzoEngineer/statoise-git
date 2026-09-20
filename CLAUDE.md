@@ -48,6 +48,20 @@ the main app as a URL: `statoisegit://<action>?path=<repo-or-file-path>[&file=�
 `AppDelegate.handleURLEvent` routes it. Adding a context-menu action means touching **both**
 sides plus the `switch url.host` in `AppDelegate`.
 
+**Repositories are found, not registered.** The extension monitors the home directory as a
+single root and resolves each item to a repository with `Sources/Shared/RepositoryLocator.swift`
+(a metadata-only walk — a sandboxed extension may stat paths whose contents it cannot read).
+It publishes what Finder is showing as `ObservedRepositories`, split into `inside` (the
+repository being browsed into) and `listed` (repository folders merely drawn in a directory).
+`GitStatusService` refreshes `inside` plus the always-watched Preferences list every cycle and
+rotates through `listed` on a slower budget, because one folder of clones can publish dozens of
+repositories at once. Finder does not reliably call `endObservingDirectory`, and it shuts the
+extension down when no window needs it, so the published file carries `updatedAt` and the app
+ignores observations that stopped being re-stamped.
+
+`GitStatusService` is an actor driven by a single refresh loop rather than a `Timer`: a cycle
+can outlast its own interval, and two cycles running concurrently corrupt the state they share.
+
 **All git invocation goes through `Sources/GitOperations/GitCommandRunner.swift`** (async/await,
 `GitCommandRunner.shared`). Do not spawn `git` anywhere else. Two long-standing hazards this
 file already handles — preserve them when editing:

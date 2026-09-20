@@ -7,11 +7,31 @@ private let logger = Logger(subsystem: "com.statoisegit.app.FinderExtension", ca
 
 class FinderSyncExtension: FIFinderSync {
 
-    private static let bootstrapDirectoryURL = URL(fileURLWithPath: "/Users/Shared")
-    
+    /// Everything under the user's home is monitored, so a repository is picked up by
+    /// browsing to it — no registration needed. Repositories elsewhere (other volumes)
+    /// still have to be listed, and get an entry of their own.
+    private static let homeDirectoryURL = URL(fileURLWithPath: RepositoryLocator.homeDirectory, isDirectory: true)
+
     private var statusCache: [String: GitFileStatus] = [:]
     private var monitoredDirectories: Set<URL> = []
     private var refreshTimer: Timer?
+
+    /// Per directory Finder is showing: the repository it lives in, and the repository
+    /// folders drawn inside it. Published to the app so it knows what to run git status
+    /// on — and which of those the user is actually working in.
+    private var insideRepositoryRoots: [String: String] = [:]
+    private var listedRepositoryRoots: [String: Set<String>] = [:]
+    private var publishedRepositories = ObservedRepositories()
+    private var lastPublishedAt = Date.distantPast
+
+    /// Repository roots whose status cache has already been merged into `statusCache`,
+    /// so a folder of clean files does not re-read the same JSON once per item.
+    private var loadedRepositoryRoots: Set<String> = []
+
+    /// Directory path -> repository root (nil means "not in a repository"), so the walk
+    /// up the tree happens once per directory instead of once per drawn item.
+    private var repositoryRootCache: [String: String?] = [:]
+    private var repositoryRootCacheStamp = Date()
     
     // MARK: - Toolbar Item
     
@@ -33,9 +53,8 @@ class FinderSyncExtension: FIFinderSync {
         
         logger.notice("FinderSyncExtension init() started")
 
-        // Finder may not launch the extension unless at least one directory is monitored.
-        // Use a benign system-wide directory to bootstrap startup without triggering Documents prompts.
-        FIFinderSyncController.default().directoryURLs = [Self.bootstrapDirectoryURL]
+        // Finder does not launch the extension unless at least one directory is monitored.
+        FIFinderSyncController.default().directoryURLs = [Self.homeDirectoryURL]
         
         // Register badge icons for Finder overlays
         registerBadgeIcons()
@@ -57,6 +76,7 @@ class FinderSyncExtension: FIFinderSync {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             self?.reloadMonitoredDirectories()
             self?.reloadAllStatusFromCache()
+            self?.publishObservedRoots()
         }
     }
     
@@ -113,32 +133,94 @@ class FinderSyncExtension: FIFinderSync {
     // MARK: - Monitored Directories
     
     private func reloadMonitoredDirectories() {
-        let prefs = RepositoryPreferences.shared
-        let publishedRoots = prefs.readMonitoredRepoRoots()
-        let fallbackRoots = prefs.fallbackEnabledRepositoryPathsForExtension()
-        let roots = publishedRoots.isEmpty ? fallbackRoots : publishedRoots
-        let effectiveDirs: Set<URL>
-        if roots.isEmpty {
-            effectiveDirs = [Self.bootstrapDirectoryURL]
-        } else {
-            var dirs = Set<URL>()
-            for root in roots {
-                let rootURL = URL(fileURLWithPath: root).resolvingSymlinksInPath().standardizedFileURL
-                dirs.insert(rootURL)
+        var dirs: Set<URL> = [Self.homeDirectoryURL]
 
-                let parentPath = (rootURL.path as NSString).deletingLastPathComponent
-                if !parentPath.isEmpty && parentPath != "/" {
-                    dirs.insert(URL(fileURLWithPath: parentPath).standardizedFileURL)
-                }
+        // Repositories outside the home directory need an explicit entry, plus their
+        // parent so that the repository folder itself can be badged.
+        let homePrefix = RepositoryLocator.homeDirectory + "/"
+        for root in RepositoryPreferences.shared.readMonitoredRepoRoots() where !root.hasPrefix(homePrefix) {
+            let rootURL = URL(fileURLWithPath: root).resolvingSymlinksInPath().standardizedFileURL
+            dirs.insert(rootURL)
+
+            let parentPath = (rootURL.path as NSString).deletingLastPathComponent
+            if !parentPath.isEmpty && parentPath != "/" {
+                dirs.insert(URL(fileURLWithPath: parentPath).standardizedFileURL)
             }
-            effectiveDirs = dirs
         }
-        
-        // Only update if changed
-        if effectiveDirs != monitoredDirectories {
-            monitoredDirectories = effectiveDirs
-            FIFinderSyncController.default().directoryURLs = monitoredDirectories
-            logger.notice("Monitoring \(self.monitoredDirectories.count) directories: \(self.monitoredDirectories.map(\.path).joined(separator: ", "))")
+
+        guard dirs != monitoredDirectories else { return }
+        monitoredDirectories = dirs
+        FIFinderSyncController.default().directoryURLs = dirs
+        logger.notice("Monitoring \(self.monitoredDirectories.count) directories: \(self.monitoredDirectories.map(\.path).joined(separator: ", "))")
+    }
+
+    // MARK: - Repository Lookup
+
+    /// The repository root an item belongs to, resolved per directory and cached.
+    private func repositoryRoot(forItemAt path: String) -> String? {
+        let parent = (path as NSString).deletingLastPathComponent
+        if let root = cachedRepositoryRoot(forDirectory: parent) {
+            return root
+        }
+
+        // A repository folder listed inside a directory that is not itself under git:
+        // one stat for its own .git is far cheaper than walking up from every sibling.
+        if RepositoryLocator.isRepositoryRoot(path) {
+            noteRepository(path, drawnIn: parent)
+            return path
+        }
+        return nil
+    }
+
+    private func cachedRepositoryRoot(forDirectory directory: String) -> String? {
+        // Repositories get cloned and deleted while Finder stays open, so the cache is
+        // a short-lived optimisation rather than a permanent answer.
+        if Date().timeIntervalSince(repositoryRootCacheStamp) > 30 {
+            repositoryRootCache.removeAll()
+            repositoryRootCacheStamp = Date()
+        }
+
+        if let cached = repositoryRootCache[directory] {
+            return cached
+        }
+
+        let root = RepositoryLocator.repositoryRoot(containing: directory)
+        repositoryRootCache[directory] = root
+        return root
+    }
+
+    /// Record a repository that is visible in a directory Finder is showing, so the app
+    /// keeps its status fresh.
+    private func noteRepository(_ root: String, drawnIn directory: String) {
+        guard var roots = listedRepositoryRoots[directory] else { return }
+        guard roots.insert(root).inserted else { return }
+        listedRepositoryRoots[directory] = roots
+        publishObservedRoots()
+    }
+
+    private var observedRepositoryRoots: Set<String> {
+        Set(insideRepositoryRoots.values).union(listedRepositoryRoots.values.joined())
+    }
+
+    private func publishObservedRoots() {
+        let inside = Set(insideRepositoryRoots.values)
+        let observed = ObservedRepositories(
+            inside: inside.sorted(),
+            listed: Set(listedRepositoryRoots.values.joined()).subtracting(inside).sorted()
+        )
+
+        let changed = observed.inside != publishedRepositories.inside
+            || observed.listed != publishedRepositories.listed
+        // Re-stamp even when nothing changed: the app treats an unrefreshed file as
+        // "the extension is gone" and falls back to the always-watched list.
+        let stale = Date().timeIntervalSince(lastPublishedAt) > 15
+        guard changed || stale else { return }
+
+        publishedRepositories = observed
+        lastPublishedAt = Date()
+        RepositoryPreferences.shared.writeObservedRepositories(observed)
+        if changed {
+            logger.notice("Observing \(observed.inside.count) repositories, \(observed.listed.count) listed")
         }
     }
     
@@ -150,27 +232,49 @@ class FinderSyncExtension: FIFinderSync {
     
     override func beginObservingDirectory(at url: URL) {
         logger.notice("beginObservingDirectory: \(url.path)")
-        // Load cached status from App Group
-        loadStatusCacheForDirectory(url)
+
+        let directory = url.path
+        if let root = cachedRepositoryRoot(forDirectory: directory) {
+            insideRepositoryRoots[directory] = root
+            loadStatusCache(forRepositoryRoot: root)
+        }
+        if listedRepositoryRoots[directory] == nil {
+            listedRepositoryRoots[directory] = []
+        }
+        publishObservedRoots()
     }
     
     override func endObservingDirectory(at url: URL) {
         // Clean up cached status for this directory
         let prefix = url.path
         statusCache = statusCache.filter { !$0.key.hasPrefix(prefix) }
+
+        insideRepositoryRoots.removeValue(forKey: url.path)
+        listedRepositoryRoots.removeValue(forKey: url.path)
+        publishObservedRoots()
     }
     
     override func requestBadgeIdentifier(for url: URL) {
         let path = url.path
-        
+
+        // Finder asks about every item it draws, most of which have nothing to do with
+        // git, so the cheap rejections come first.
+        guard !RepositoryLocator.isExcluded(path) else { return }
+
         if let cachedStatus = statusCache[path] {
             setBadge(for: url, status: cachedStatus)
-        } else if let parentStatus = findParentDirectoryStatus(for: path) {
+            return
+        }
+
+        guard let repositoryRoot = repositoryRoot(forItemAt: path) else { return }
+
+        if let parentStatus = findParentDirectoryStatus(for: path) {
             statusCache[path] = parentStatus
             setBadge(for: url, status: parentStatus)
-        } else {
-            loadStatusFromAppGroup(for: url)
+            return
         }
+
+        applyBadge(for: url, repositoryRoot: repositoryRoot)
     }
     
     private func setBadge(for url: URL, status: GitFileStatus) {
@@ -199,33 +303,51 @@ class FinderSyncExtension: FIFinderSync {
     
     // MARK: - Status from App Group Cache
     
-    private func loadStatusCacheForDirectory(_ url: URL) {
-        let prefs = RepositoryPreferences.shared
-        let repoRoots = prefs.readMonitoredRepoRoots()
-        let dirPath = url.path
-        
-        for root in repoRoots {
-            if dirPath.hasPrefix(root + "/") || dirPath == root {
-                if let cached = prefs.readStatusCache(repoPath: root) {
-                    for entry in cached {
-                        if let fileStatus = GitFileStatus(rawValue: entry.status) {
-                            statusCache[entry.path] = fileStatus
-                        }
-                    }
-                    logger.notice("Loaded \(cached.count) cached statuses from App Group for \(root)")
-                }
-                return
+    /// Merge one repository's cached status, at most once per refresh cycle.
+    @discardableResult
+    private func loadStatusCache(forRepositoryRoot root: String) -> Bool {
+        if loadedRepositoryRoots.contains(root) { return true }
+        guard let cached = RepositoryPreferences.shared.readStatusCache(repoPath: root) else {
+            // The app has not reported on this repository yet. It will once it picks up
+            // the observation request, and the refresh timer re-badges then.
+            return false
+        }
+
+        loadedRepositoryRoots.insert(root)
+        for entry in cached {
+            if let fileStatus = GitFileStatus(rawValue: entry.status) {
+                statusCache[entry.path] = fileStatus
             }
+        }
+        logger.notice("Loaded \(cached.count) cached statuses for \(root)")
+        return true
+    }
+
+    private func applyBadge(for url: URL, repositoryRoot root: String) {
+        guard loadStatusCache(forRepositoryRoot: root) else { return }
+
+        let path = url.path
+        if let fileStatus = statusCache[path] {
+            setBadge(for: url, status: fileStatus)
+        } else if let parentStatus = findParentDirectoryStatus(for: path) {
+            // File inside an untracked/ignored directory inherits parent status
+            statusCache[path] = parentStatus
+            setBadge(for: url, status: parentStatus)
+        } else {
+            // File not in status output = tracked and unmodified
+            setBadge(for: url, status: .unmodified)
         }
     }
     
     private func reloadAllStatusFromCache() {
         let prefs = RepositoryPreferences.shared
-        let repoRoots = prefs.readMonitoredRepoRoots()
+        let repoRoots = observedRepositoryRoots
         var newCache: [String: GitFileStatus] = [:]
+        var loaded: Set<String> = []
         
         for root in repoRoots {
             if let cached = prefs.readStatusCache(repoPath: root) {
+                loaded.insert(root)
                 for entry in cached {
                     if let fileStatus = GitFileStatus(rawValue: entry.status) {
                         newCache[entry.path] = fileStatus
@@ -237,82 +359,12 @@ class FinderSyncExtension: FIFinderSync {
         // Only update if there's a change
         if newCache != statusCache {
             statusCache = newCache
-            // Re-apply badges for monitored directories
-            for dir in monitoredDirectories {
-                // Touch the directory to force Finder to re-request badges
-                FIFinderSyncController.default().setBadgeIdentifier("", for: dir)
+            loadedRepositoryRoots = loaded
+            // Touch the directories Finder is showing to force it to re-request badges
+            for dir in listedRepositoryRoots.keys {
+                FIFinderSyncController.default().setBadgeIdentifier("", for: URL(fileURLWithPath: dir))
             }
             logger.notice("Refreshed status cache: \(newCache.count) entries")
-        }
-    }
-    
-    /// Find git repository root by walking up the directory tree looking for .git
-    private func findGitRoot(from path: String) -> String? {
-        let fm = FileManager.default
-        var current = path
-        
-        // If path is a file, start from its directory
-        var isDir: ObjCBool = false
-        if fm.fileExists(atPath: current, isDirectory: &isDir), !isDir.boolValue {
-            current = (current as NSString).deletingLastPathComponent
-        }
-        
-        while current != "/" && !current.isEmpty {
-            let gitDir = (current as NSString).appendingPathComponent(".git")
-            if fm.fileExists(atPath: gitDir) {
-                return current
-            }
-            current = (current as NSString).deletingLastPathComponent
-        }
-        return nil
-    }
-    
-    /// Load status from the App Group shared cache written by the main app
-    private func loadStatusFromAppGroup(for url: URL) {
-        // Try to find repo root from known roots
-        let prefs = RepositoryPreferences.shared
-        let repoRoots = prefs.readMonitoredRepoRoots()
-        
-        // Find which repo root this file belongs to
-        let filePath = url.path
-        var matchingRoot: String?
-        for root in repoRoots {
-            if filePath.hasPrefix(root + "/") || filePath == root {
-                matchingRoot = root
-                break
-            }
-        }
-        
-        // Also try finding .git directory locally
-        if matchingRoot == nil {
-            matchingRoot = findGitRoot(from: filePath)
-        }
-        
-        guard let repoRoot = matchingRoot else {
-            return
-        }
-        
-        // Read cached status
-        if let cached = prefs.readStatusCache(repoPath: repoRoot) {
-            // Populate status cache
-            for entry in cached {
-                if let fileStatus = GitFileStatus(rawValue: entry.status) {
-                    statusCache[entry.path] = fileStatus
-                }
-            }
-            
-            if let fileStatus = statusCache[filePath] {
-                setBadge(for: url, status: fileStatus)
-            } else if let parentStatus = findParentDirectoryStatus(for: filePath) {
-                // File inside an untracked/ignored directory inherits parent status
-                statusCache[filePath] = parentStatus
-                setBadge(for: url, status: parentStatus)
-            } else {
-                // File not in status output = tracked and unmodified
-                setBadge(for: url, status: .unmodified)
-            }
-            
-            logger.notice("Loaded \(cached.count) cached statuses for repo \(repoRoot)")
         }
     }
     
@@ -350,7 +402,7 @@ class FinderSyncExtension: FIFinderSync {
             candidates.append(target.path)
         }
         candidates.append(contentsOf: (controller.selectedItemURLs() ?? []).map(\.path))
-        return candidates.first { findGitRoot(from: $0) != nil }
+        return candidates.first { RepositoryLocator.repositoryRoot(containing: $0) != nil }
     }
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu {
@@ -370,7 +422,7 @@ class FinderSyncExtension: FIFinderSync {
         }
 
         let selectedItems = FIFinderSyncController.default().selectedItemURLs() ?? []
-        let targetIsInRepository = findGitRoot(from: target.path) != nil
+        let targetIsInRepository = RepositoryLocator.repositoryRoot(containing: target.path) != nil
         
         // Git Pull
         let pullItem = NSMenuItem(title: "Git Pull…", action: #selector(gitPull(_:)), keyEquivalent: "")

@@ -24,8 +24,10 @@ opening a terminal.
 - **Log window** — commit graph rendering, per-commit file list, per-file diff, file history
 - **Diff window** — built-in viewer, plus launching an external diff tool (e.g. Meld)
 - **Submodule aware** — status, diff and commit routing all handle submodule paths correctly
-- **Preferences** — register the repositories to monitor, pick the `git` binary and the
-  external diff tool, and jump straight to System Settings → Login Items & Extensions
+- **No setup per repository** — repositories are recognised by browsing to them; the menu
+  and the badges appear wherever git applies and stay out of the way where it does not
+- **Preferences** — keep chosen repositories refreshed at all times, pick the `git` binary
+  and the external diff tool, and jump straight to System Settings → Login Items & Extensions
 
 ## Requirements
 
@@ -59,8 +61,13 @@ The app ships two bundles that talk to each other:
 The extension is sandboxed and cannot run Git itself, so choosing a menu item opens a
 `statoisegit://<action>?path=…` URL that the main app handles (`commit`, `log`, `diff`,
 `pull`, `push`, `fetch`, `add`, `stash-save`, `stash-save-prompt`, `stash-pop`, `stash-list`,
-`reset-hard`, `clean-xdf`, `submodule-update`). Status is computed in the app and shared with
-the extension through a cache directory under `/Users/Shared/StatoiseGitShared`.
+`reset-hard`, `clean-xdf`, `submodule-update`).
+
+The extension monitors the whole home directory and works out which repository each item
+belongs to, then publishes the repositories Finder is showing to
+`/Users/Shared/StatoiseGitShared`. The app runs `git status` on those — every cycle for the
+one being browsed into, on a slower rotation for repositories merely listed in a folder —
+and writes the results back to the same directory for the extension to draw.
 
 ## Repository layout
 

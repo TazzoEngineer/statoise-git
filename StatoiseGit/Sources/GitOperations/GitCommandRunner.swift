@@ -724,20 +724,7 @@ actor GitCommandRunner {
     
     /// Find repository root by walking up the directory tree
     nonisolated func repositoryRootByFilesystem(at path: String) -> String? {
-        let fm = FileManager.default
-        var current = path
-        var isDir: ObjCBool = false
-        if fm.fileExists(atPath: current, isDirectory: &isDir), !isDir.boolValue {
-            current = (current as NSString).deletingLastPathComponent
-        }
-        while current != "/" && !current.isEmpty {
-            let gitDir = (current as NSString).appendingPathComponent(".git")
-            if fm.fileExists(atPath: gitDir) {
-                return current
-            }
-            current = (current as NSString).deletingLastPathComponent
-        }
-        return nil
+        RepositoryLocator.repositoryRoot(containing: path)
     }
     
     func repositoryRoot(at path: String) async throws -> String {

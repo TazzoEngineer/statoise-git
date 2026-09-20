@@ -17,6 +17,7 @@
 		2688E022FCB8D825A2DDD5B6 /* GitCommandRunnerBasicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDDDACC2B5B59753C6F1C52 /* GitCommandRunnerBasicTests.swift */; };
 		29882EC244C501E336802074 /* ModifiedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = E3C3CEC2BA377BCD65C71F98 /* ModifiedIcon.png */; };
 		2BA543BE336A25E5EC753804 /* DeletedIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 2873FBD18873FA22C00422C7 /* DeletedIcon.png */; };
+		30FF98A3644631ECF8192937 /* RepositoryLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 154B3D8977190FB1C6C321B1 /* RepositoryLocator.swift */; };
 		33FC3D67B1CC2AD9B52CBBF0 /* GitContextSwitchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADC5CCB40D28AA8977AC791 /* GitContextSwitchTests.swift */; };
 		3F1B8D45C1D811E965F41F20 /* GitDotPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39368286468DD8F8C99BA450 /* GitDotPathTests.swift */; };
 		403F758DCE42CE3CCDD4388E /* DiffWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E676FDF3F85259E84853C4EE /* DiffWindowController.swift */; };
@@ -32,6 +33,8 @@
 		94E681C13199FF249B0A1FFB /* DeletedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 607625B67D504A9707CCFCCE /* DeletedIcon@2x.png */; };
 		9947EF51C2C54DE4EFE92469 /* LockedIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 122F966201BDDCB3F7BCA674 /* LockedIcon@2x.png */; };
 		9B750BEF817A960085E59271 /* GitCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */; };
+		9BCD6C3C12C3736E4A0F9A31 /* RepositoryLocatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78E3EAA3D4979DF31E34FE2 /* RepositoryLocatorTests.swift */; };
+		9C9E4195FB56EE785B482599 /* RepositoryLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 154B3D8977190FB1C6C321B1 /* RepositoryLocator.swift */; };
 		9EE7B88F19BDF9FD77856EFB /* GitCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373CD368EB3D69ABAB4B2C04 /* GitCommandRunner.swift */; };
 		ABED2826ECB1C203713CD094 /* GitSubmoduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F9C3E5DD31673EE14A3825B /* GitSubmoduleTests.swift */; };
 		B06BFD699B00CC577ACA1C55 /* GitGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D28A0757643F5E98A0F548 /* GitGraphView.swift */; };
@@ -41,6 +44,7 @@
 		D4951006EED4465B1E0CB506 /* CommitWindowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8CC23E5159D6846B06EBF9 /* CommitWindowUITests.swift */; };
 		D557D85E3A4229852F4AD996 /* CommitWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6897F64E4E20A65FDCAE0B /* CommitWindowController.swift */; };
 		D7EB5A1BD7DDB2C48B377B2E /* ConflictIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A6202F5CAA92EAF670926EEF /* ConflictIcon.png */; };
+		DA2AA810110D9366DD268A90 /* RepositoryLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 154B3D8977190FB1C6C321B1 /* RepositoryLocator.swift */; };
 		DBAC6FF4EAA7FAEDBE7E013A /* FinderSync.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9811996E572CE1561785A645 /* FinderSync.framework */; };
 		DED4D0F4663C3BA7E6784E3E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34A02571BA381C50EE4B41D8 /* main.swift */; };
 		E16C9F6EC3A18684F360E27D /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3232403EF1445F7F6E877B48 /* MainMenu.swift */; };
@@ -90,6 +94,7 @@
 		05E05A38D916E9042F4DC6DC /* UnversionedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = UnversionedIcon.png; sourceTree = "<group>"; };
 		0BA087F90A91330CB4A2D5A2 /* ModifiedIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ModifiedIcon@2x.png"; sourceTree = "<group>"; };
 		122F966201BDDCB3F7BCA674 /* LockedIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "LockedIcon@2x.png"; sourceTree = "<group>"; };
+		154B3D8977190FB1C6C321B1 /* RepositoryLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryLocator.swift; sourceTree = "<group>"; };
 		1A6897F64E4E20A65FDCAE0B /* CommitWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitWindowController.swift; sourceTree = "<group>"; };
 		2410980BCC796C39BF079CEF /* LockedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = LockedIcon.png; sourceTree = "<group>"; };
 		2873FBD18873FA22C00422C7 /* DeletedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = DeletedIcon.png; sourceTree = "<group>"; };
@@ -128,6 +133,7 @@
 		CB63294A20742608685B491B /* StatoiseGitFinderExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StatoiseGitFinderExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBECD02E88805A718E2E4906 /* NormalIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "NormalIcon@2x.png"; sourceTree = "<group>"; };
 		CDED2500E2473D89F1123BDB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		D78E3EAA3D4979DF31E34FE2 /* RepositoryLocatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryLocatorTests.swift; sourceTree = "<group>"; };
 		DFFACBC728453126B5EE5102 /* StatoiseGitFinderExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StatoiseGitFinderExtension.entitlements; sourceTree = "<group>"; };
 		E37DFFACC7A95E1B544C3B2B /* StatoiseGit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StatoiseGit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E3C3CEC2BA377BCD65C71F98 /* ModifiedIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ModifiedIcon.png; sourceTree = "<group>"; };
@@ -242,6 +248,7 @@
 				2ADC5CCB40D28AA8977AC791 /* GitContextSwitchTests.swift */,
 				39368286468DD8F8C99BA450 /* GitDotPathTests.swift */,
 				3F9C3E5DD31673EE14A3825B /* GitSubmoduleTests.swift */,
+				D78E3EAA3D4979DF31E34FE2 /* RepositoryLocatorTests.swift */,
 				2ADB97FA218B2D0FD4F65799 /* TestGitRepository.swift */,
 			);
 			path = Tests;
@@ -258,6 +265,7 @@
 		E83C3D18CE2249BE39D03CBB /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				154B3D8977190FB1C6C321B1 /* RepositoryLocator.swift */,
 				AB1E8EAA7C4DF484A406360B /* RepositoryPreferences.swift */,
 			);
 			name = Shared;
@@ -453,6 +461,7 @@
 			files = (
 				EF70BFE1E2CBA3C7102B0C85 /* FinderSyncExtension.swift in Sources */,
 				9EE7B88F19BDF9FD77856EFB /* GitCommandRunner.swift in Sources */,
+				30FF98A3644631ECF8192937 /* RepositoryLocator.swift in Sources */,
 				16F33D5F08A46A1575EE8DA6 /* RepositoryPreferences.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -466,6 +475,8 @@
 				33FC3D67B1CC2AD9B52CBBF0 /* GitContextSwitchTests.swift in Sources */,
 				3F1B8D45C1D811E965F41F20 /* GitDotPathTests.swift in Sources */,
 				ABED2826ECB1C203713CD094 /* GitSubmoduleTests.swift in Sources */,
+				DA2AA810110D9366DD268A90 /* RepositoryLocator.swift in Sources */,
+				9BCD6C3C12C3736E4A0F9A31 /* RepositoryLocatorTests.swift in Sources */,
 				49F13AA1ADEBD9E00F87F126 /* RepositoryPreferences.swift in Sources */,
 				B948838B780C182622BCF098 /* TestGitRepository.swift in Sources */,
 			);
@@ -486,6 +497,7 @@
 				FAB586019A424711431B6085 /* LogWindowController.swift in Sources */,
 				E16C9F6EC3A18684F360E27D /* MainMenu.swift in Sources */,
 				74B78C2CC2AC823A01418FFF /* PreferencesWindowController.swift in Sources */,
+				9C9E4195FB56EE785B482599 /* RepositoryLocator.swift in Sources */,
 				EFF8DA16150DEDA949F99966 /* RepositoryPreferences.swift in Sources */,
 				DED4D0F4663C3BA7E6784E3E /* main.swift in Sources */,
 			);

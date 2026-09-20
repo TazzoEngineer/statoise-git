@@ -19,6 +19,26 @@ struct CachedFileStatus: Codable {
     let status: String // GitFileStatus rawValue
 }
 
+/// The repositories Finder is currently showing, split by how urgently they need to be
+/// refreshed. A single folder can list dozens of repositories, so only the one being
+/// browsed into earns a refresh on every cycle.
+struct ObservedRepositories: Codable {
+    /// Repositories the user is browsing inside.
+    var inside: [String] = []
+    /// Repositories merely drawn as folders in a directory that is not itself one.
+    var listed: [String] = []
+    /// When the extension last confirmed this. Finder does not reliably call
+    /// endObservingDirectory when a window closes, and it shuts the extension down
+    /// entirely once no window needs it, so a stale file is the normal case rather than
+    /// an edge case: the extension re-stamps this while it lives, and the app ignores
+    /// observations that stopped being refreshed.
+    var updatedAt: Date = Date()
+
+    func isFresh(within maxAge: TimeInterval) -> Bool {
+        Date().timeIntervalSince(updatedAt) <= maxAge
+    }
+}
+
 /// Manages user preferences shared between the app and the Finder extension
 /// via standard defaults plus a shared filesystem cache directory.
 class RepositoryPreferences {
@@ -237,6 +257,37 @@ class RepositoryPreferences {
     }
     
     /// Write all repo roots being monitored so Extension can find them
+    /// Written by the Finder extension: the repositories Finder is showing right now.
+    /// The app refreshes these on top of the always-watched list, so browsing into a
+    /// repository is enough to make its badges appear.
+    func writeObservedRepositories(_ observed: ObservedRepositories) {
+        let url = sharedDirectoryURL.appendingPathComponent("observed_roots.json")
+        if let data = try? JSONEncoder().encode(observed) {
+            try? data.write(to: url, options: .atomic)
+        }
+    }
+
+    func readObservedRepositories() -> ObservedRepositories {
+        let url = sharedDirectoryURL.appendingPathComponent("observed_roots.json")
+        guard let data = try? Data(contentsOf: url) else { return ObservedRepositories() }
+        return (try? JSONDecoder().decode(ObservedRepositories.self, from: data)) ?? ObservedRepositories()
+    }
+
+    /// Drop the caches of repositories nobody watches any more, so a stale badge can
+    /// never outlive the repository it was computed from.
+    func pruneStatusCaches(keeping roots: [String]) {
+        let statusDir = sharedDirectoryURL.appendingPathComponent("StatusCache", isDirectory: true)
+        let keep = Set(roots.compactMap { statusCacheURL(forRepoPath: $0)?.lastPathComponent })
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: statusDir,
+            includingPropertiesForKeys: nil
+        ) else { return }
+
+        for file in files where file.pathExtension == "json" && !keep.contains(file.lastPathComponent) {
+            try? FileManager.default.removeItem(at: file)
+        }
+    }
+
     func writeMonitoredRepoRoots(_ roots: [String]) {
         let url = sharedDirectoryURL.appendingPathComponent("repo_roots.json")
         if let data = try? JSONEncoder().encode(roots) {
