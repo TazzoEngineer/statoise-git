@@ -57,16 +57,18 @@ class PreferencesWindowController: NSWindowController {
         let view = NSView(frame: NSRect(x: 0, y: 0, width: 560, height: 340))
         
         // Repositories are found by browsing to them, so spell out what this list is
-        // actually for now that it is no longer required.
-        let hint = NSTextField(labelWithString: "Repositories are detected automatically while you browse. Add folders here only to keep them watched at all times.")
-        hint.frame = NSRect(x: 12, y: 308, width: 536, height: 16)
+        // actually for now that it is no longer required. Wrapping rather than truncating:
+        // the sentence is longer than the window is wide.
+        let hint = NSTextField(wrappingLabelWithString: "Repositories are found automatically as you browse.\nAdd folders here only to keep them watched at all times.")
+        hint.frame = NSRect(x: 12, y: 294, width: 536, height: 30)
         hint.font = NSFont.systemFont(ofSize: 11)
         hint.textColor = .secondaryLabelColor
-        hint.lineBreakMode = .byTruncatingTail
+        hint.maximumNumberOfLines = 2
+        hint.isSelectable = false
         view.addSubview(hint)
 
         // Table View
-        let scrollView = NSScrollView(frame: NSRect(x: 10, y: 60, width: 540, height: 242))
+        let scrollView = NSScrollView(frame: NSRect(x: 10, y: 60, width: 540, height: 228))
         scrollView.autoresizingMask = []
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = true
