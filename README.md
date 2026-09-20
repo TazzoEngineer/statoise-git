@@ -1,5 +1,7 @@
 # Statoise Git
 
+*English | [日本語](README.ja.md)*
+
 A Finder-integrated Git client for macOS — TortoiseGit-style workflow, native AppKit app.
 
 Statoise Git puts Git where you already work: right-click any file or folder in Finder to
